@@ -5,8 +5,33 @@ MedPrep - MBBS Exam Preparation Platform
 """
 
 from pathlib import Path
-from decouple import config
 import os
+import sys
+
+# Load environment variables from .env file
+env_path = Path(__file__).resolve().parent.parent / '.env'
+if env_path.exists():
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key] = value
+
+# Add the project root to Python path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Simple config function
+def config(key, default=None, cast=None):
+    value = os.environ.get(key, default)
+    if cast and value is not None:
+        if cast == bool:
+            return str(value).lower() in ('true', '1', 'yes', 'on')
+        elif callable(cast):
+            return cast(value)
+        else:
+            return cast(value)
+    return value
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,18 +56,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     
-    # Third party apps
-    'crispy_forms',
-    'crispy_bootstrap5',
+    # Third party apps (disabled temporarily)
+    # 'crispy_forms',
+    # 'crispy_bootstrap5',
     
     # Local apps
     'core',
     'staff',
 ]
 
-# Crispy Forms Configuration
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
+# Crispy Forms Configuration (disabled temporarily)
+# CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+# CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
