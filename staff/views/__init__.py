@@ -10,7 +10,9 @@ from .subject_views import (
     SubjectListView, SubjectCreateView, SubjectEditView,
     SubjectCreateAjaxView, SubjectEditAjaxView, SubjectToggleStatusView,
     GetSubjectTopicsView, TopicCreateAjaxView, TopicEditAjaxView,
-    TopicListView, TopicCreateView, TopicEditView
+    TopicListView, TopicCreateView, TopicEditView,
+    TopicListEnhancedView, TopicToggleStatusView, TopicDeleteView,
+    TopicCreateAjaxEnhancedView, TopicEditAjaxEnhancedView
 )
 from .tag_views import TagListView, TagCreateView, TagEditView, TagDeleteView
 from .quiz_views import QuizAttemptListView, LeaderboardView
@@ -32,6 +34,8 @@ __all__ = [
     'SubjectCreateAjaxView', 'SubjectEditAjaxView', 'SubjectToggleStatusView',
     'GetSubjectTopicsView', 'TopicCreateAjaxView', 'TopicEditAjaxView',
     'TopicListView', 'TopicCreateView', 'TopicEditView',
+    'TopicListEnhancedView', 'TopicToggleStatusView', 'TopicDeleteView',
+    'TopicCreateAjaxEnhancedView', 'TopicEditAjaxEnhancedView',
     'TagListView', 'TagCreateView', 'TagEditView', 'TagDeleteView',
     'QuizAttemptListView', 'LeaderboardView',
     'ResourceListView', 'NoteCreateView', 'NoteEditView',

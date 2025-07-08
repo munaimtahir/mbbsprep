@@ -38,11 +38,13 @@ urlpatterns = [
     path('subjects/ajax/<int:pk>/edit/', views.SubjectEditAjaxView.as_view(), name='subject_ajax_edit'),
     path('subjects/toggle-status/', views.SubjectToggleStatusView.as_view(), name='subject_toggle_status'),
     path('subjects/<int:pk>/topics/', views.GetSubjectTopicsView.as_view(), name='get_subject_topics'),
-    path('topics/', views.TopicListView.as_view(), name='topic_list'),
+    path('topics/', views.TopicListEnhancedView.as_view(), name='topic_list'),
     path('topics/add/', views.TopicCreateView.as_view(), name='topic_add'),
     path('topics/<int:pk>/edit/', views.TopicEditView.as_view(), name='topic_edit'),
-    path('topics/ajax/add/', views.TopicCreateAjaxView.as_view(), name='topic_ajax_add'),
-    path('topics/ajax/<int:pk>/edit/', views.TopicEditAjaxView.as_view(), name='topic_ajax_edit'),
+    path('topics/ajax/add/', views.TopicCreateAjaxEnhancedView.as_view(), name='topic_ajax_add'),
+    path('topics/ajax/<int:pk>/edit/', views.TopicEditAjaxEnhancedView.as_view(), name='topic_ajax_edit'),
+    path('topics/toggle-status/', views.TopicToggleStatusView.as_view(), name='topic_toggle_status'),
+    path('topics/<int:pk>/delete/', views.TopicDeleteView.as_view(), name='topic_delete'),
     
     # Tag Management
     path('tags/', views.TagListView.as_view(), name='tag_list'),

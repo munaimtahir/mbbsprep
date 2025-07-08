@@ -4,70 +4,80 @@
 .subjects-header {
     background: linear-gradient(135deg, #0057A3 0%, #004080 100%);
     color: white;
-    padding: 2rem 0;
+    padding: 2.5rem 0;
     margin-bottom: 2rem;
     border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.breadcrumb-nav {
-    display: flex;
-    align-items: center;
-    font-size: 0.875rem;
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin: 0;
 }
 
-.breadcrumb-item {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.breadcrumb-item.active {
-    color: white;
-    font-weight: 600;
-}
-
-.breadcrumb-separator {
-    margin: 0 0.75rem;
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
     color: rgba(255, 255, 255, 0.6);
 }
 
-/* Primary Button */
-.btn-primary {
-    background: #0057A3;
-    border: none;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    color: white;
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
     text-decoration: none;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
 }
 
-.btn-primary:hover {
-    background: #004080;
+.text-white-50:hover {
+    color: rgba(255, 255, 255, 0.8) !important;
+    text-decoration: none;
+}
+
+.text-white-75 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.subjects-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
     color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 87, 163, 0.3);
+    margin-bottom: 0.5rem;
 }
 
-/* Secondary Button */
-.btn-secondary {
-    background: #6C757D;
+.subjects-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Remove underline from manage topics button */
+.subjects-header .btn.btn-outline-light,
+.subjects-header a.btn.btn-outline-light {
+    text-decoration: none !important;
+    border-width: 2px;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    transition: all 0.2s ease;
+}
+
+.subjects-header .btn.btn-outline-light:hover,
+.subjects-header a.btn.btn-outline-light:hover {
+    text-decoration: none !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+}
+
+/* Style for light button to match MCQ page */
+.subjects-header .btn.btn-light,
+.subjects-header a.btn.btn-light {
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
     border: none;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
 }
 
-.btn-secondary:hover {
-    background: #545b62;
-    color: white;
+.subjects-header .btn.btn-light:hover,
+.subjects-header a.btn.btn-light:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Filter Section */
@@ -91,10 +101,11 @@
     transform: translateY(-50%);
     color: #6C757D;
     z-index: 2;
+    pointer-events: none;
 }
 
 .search-input {
-    padding-left: 2.5rem;
+    padding-left: 2.75rem !important;
     border: 1px solid #E3E7ED;
     border-radius: 8px;
     font-size: 0.875rem;

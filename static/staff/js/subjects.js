@@ -36,10 +36,8 @@
         // Save subject button
         bindElement('#saveSubjectBtn', 'click', saveSubject);
         
-        // Subject actions (edit, archive, restore)
-        bindElement('.btn-edit', 'click', handleEditSubject, true);
-        bindElement('.btn-archive', 'click', handleArchiveSubject, true);
-        bindElement('.btn-restore', 'click', handleRestoreSubject, true);
+        // Subject actions (edit, archive, restore) - with delegation
+        bindActionButtons();
         
         // Topic management
         bindElement('#addTopicBtn', 'click', showAddTopicForm);
@@ -573,25 +571,51 @@
             statusBadge.innerHTML = '<i class="fas fa-circle"></i> Archived';
         }
         
-        // Update actions
+        // Update actions - Replace the button completely
         const actionsCell = row.querySelector('.subject-actions');
-        const actionButtons = actionsCell.innerHTML;
         
         if (isActive) {
-            // Show archive button
-            actionsCell.innerHTML = actionButtons.replace(
-                /btn-restore[^>]*><i class="fas fa-undo"><\/i> Restore/,
-                'btn-archive" data-subject-id="' + subjectId + '"><i class="fas fa-archive"></i> Archive'
-            );
+            // Replace restore button with archive button
+            const restoreBtn = actionsCell.querySelector('.btn-restore');
+            if (restoreBtn) {
+                restoreBtn.className = 'btn-action btn-archive';
+                restoreBtn.innerHTML = '<i class="fas fa-archive"></i> Archive';
+                restoreBtn.setAttribute('data-subject-id', subjectId);
+            }
         } else {
-            // Show restore button
-            actionsCell.innerHTML = actionButtons.replace(
-                /btn-archive[^>]*><i class="fas fa-archive"><\/i> Archive/,
-                'btn-restore" data-subject-id="' + subjectId + '"><i class="fas fa-undo"></i> Restore'
-            );
+            // Replace archive button with restore button
+            const archiveBtn = actionsCell.querySelector('.btn-archive');
+            if (archiveBtn) {
+                archiveBtn.className = 'btn-action btn-restore';
+                archiveBtn.innerHTML = '<i class="fas fa-undo"></i> Restore';
+                archiveBtn.setAttribute('data-subject-id', subjectId);
+            }
         }
     }
     
+    // Bind action buttons with delegation (can be called to rebind after updates)
+    function bindActionButtons() {
+        // Remove existing delegated listeners by using a flag
+        if (window.subjectActionsBound) {
+            return;
+        }
+        window.subjectActionsBound = true;
+        
+        // Subject actions (edit, archive, restore) - with delegation
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.btn-edit') || e.target.closest('.btn-edit')) {
+                const target = e.target.matches('.btn-edit') ? e.target : e.target.closest('.btn-edit');
+                handleEditSubject({ target });
+            } else if (e.target.matches('.btn-archive') || e.target.closest('.btn-archive')) {
+                const target = e.target.matches('.btn-archive') ? e.target : e.target.closest('.btn-archive');
+                handleArchiveSubject({ target });
+            } else if (e.target.matches('.btn-restore') || e.target.closest('.btn-restore')) {
+                const target = e.target.matches('.btn-restore') ? e.target : e.target.closest('.btn-restore');
+                handleRestoreSubject({ target });
+            }
+        });
+    }
+
     // Reset subject form
     function resetSubjectForm() {
         currentSubjectId = null;

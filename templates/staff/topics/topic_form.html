@@ -2,15 +2,15 @@
 {% load static %}
 
 {% block title %}
-    {% if object %}Edit Subject{% else %}Add Subject{% endif %} - MedPrep Admin
+    {% if object %}Edit Topic{% else %}Add Topic{% endif %} - MedPrep Admin
 {% endblock %}
 
 {% block page_title %}
-    {% if object %}Edit Subject{% else %}Add Subject{% endif %}
+    {% if object %}Edit Topic{% else %}Add Topic{% endif %}
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'staff/css/subject_form.css' %}">
+<link rel="stylesheet" href="{% static 'staff/css/topics.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -25,12 +25,12 @@
                     </a>
                 </li>
                 <li class="breadcrumb-item">
-                    <a href="{% url 'staff:subject_list' %}">
-                        <i class="fas fa-book"></i> Subjects
+                    <a href="{% url 'staff:topic_list' %}">
+                        <i class="fas fa-list"></i> Topics
                     </a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">
-                    {% if object %}Edit: {{ object.name }}{% else %}Add Subject{% endif %}
+                    {% if object %}Edit: {{ object.name }}{% else %}Add Topic{% endif %}
                 </li>
             </ol>
         </nav>
@@ -53,13 +53,13 @@
                             </div>
                             <div>
                                 <h4 class="form-title">
-                                    {% if object %}Edit Subject{% else %}Add New Subject{% endif %}
+                                    {% if object %}Edit Topic{% else %}Add New Topic{% endif %}
                                 </h4>
                                 <p class="form-subtitle">
                                     {% if object %}
-                                        Update subject information and manage topics
+                                        Update topic information and settings
                                     {% else %}
-                                        Create a new medical subject for the curriculum
+                                        Create a new topic for organizing MCQs
                                     {% endif %}
                                 </p>
                             </div>
@@ -68,59 +68,59 @@
 
                     <!-- Form Body -->
                     <div class="form-body">
-                        <form method="post" id="subjectForm" novalidate>
+                        <form method="post" id="topicForm" novalidate>
                             {% csrf_token %}
                             
-                            <!-- Subject Information Section -->
+                            <!-- Topic Information Section -->
                             <div class="form-section">
                                 <h6 class="section-title">
-                                    <i class="fas fa-info-circle me-2"></i>Subject Information
+                                    <i class="fas fa-info-circle me-2"></i>Topic Information
                                 </h6>
                                 
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <div class="form-group">
-                                            <label for="id_name" class="form-label required">
-                                                Subject Name
-                                            </label>
-                                            <input type="text" 
-                                                   class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
-                                                   id="id_name" 
-                                                   name="name" 
-                                                   value="{{ form.name.value|default:'' }}"
-                                                   placeholder="e.g., Human Anatomy"
-                                                   required>
-                                            {% if form.name.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ form.name.errors.0 }}
-                                                </div>
-                                            {% endif %}
-                                            <div class="form-hint">
-                                                Enter the full name of the medical subject
-                                            </div>
+                                <div class="form-group">
+                                    <label for="id_subject" class="form-label required">
+                                        Subject
+                                    </label>
+                                    <select class="form-select {% if form.subject.errors %}is-invalid{% endif %}" 
+                                            id="id_subject" 
+                                            name="subject" 
+                                            required>
+                                        <option value="">Select Subject</option>
+                                        {% for subject in form.subject.field.queryset %}
+                                        <option value="{{ subject.id }}" 
+                                                {% if form.subject.value == subject.id %}selected{% endif %}>
+                                            {{ subject.name }}{% if subject.code %} ({{ subject.code }}){% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.subject.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.subject.errors.0 }}
                                         </div>
+                                    {% endif %}
+                                    <div class="form-hint">
+                                        Choose the subject this topic belongs to
                                     </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="id_code" class="form-label">
-                                                Subject Code
-                                            </label>
-                                            <input type="text" 
-                                                   class="form-control {% if form.code.errors %}is-invalid{% endif %}" 
-                                                   id="id_code" 
-                                                   name="code" 
-                                                   value="{{ form.code.value|default:'' }}"
-                                                   placeholder="e.g., ANAT"
-                                                   maxlength="10">
-                                            {% if form.code.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ form.code.errors.0 }}
-                                                </div>
-                                            {% endif %}
-                                            <div class="form-hint">
-                                                Optional short code
-                                            </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="id_name" class="form-label required">
+                                        Topic Name
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                                           id="id_name" 
+                                           name="name" 
+                                           value="{{ form.name.value|default:'' }}"
+                                           placeholder="e.g., Cranial Nerves"
+                                           required>
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.name.errors.0 }}
                                         </div>
+                                    {% endif %}
+                                    <div class="form-hint">
+                                        Enter a descriptive name for this topic
                                     </div>
                                 </div>
 
@@ -132,47 +132,44 @@
                                               id="id_description" 
                                               name="description" 
                                               rows="4"
-                                              placeholder="Brief description of the subject and its scope...">{{ form.description.value|default:'' }}</textarea>
+                                              placeholder="Brief description of the topic content...">{{ form.description.value|default:'' }}</textarea>
                                     {% if form.description.errors %}
                                         <div class="invalid-feedback">
                                             {{ form.description.errors.0 }}
                                         </div>
                                     {% endif %}
                                     <div class="form-hint">
-                                        Provide a brief overview of what this subject covers
+                                        Provide a brief overview of what this topic covers
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Academic Details Section -->
+                            <!-- Organization Details Section -->
                             <div class="form-section">
                                 <h6 class="section-title">
-                                    <i class="fas fa-graduation-cap me-2"></i>Academic Details
+                                    <i class="fas fa-sort me-2"></i>Organization & Settings
                                 </h6>
                                 
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="id_year_applicable" class="form-label">
-                                                Year Applicable
+                                            <label for="id_order" class="form-label">
+                                                Display Order
                                             </label>
-                                            <select class="form-select {% if form.year_applicable.errors %}is-invalid{% endif %}" 
-                                                    id="id_year_applicable" 
-                                                    name="year_applicable">
-                                                <option value="all" {% if form.year_applicable.value == 'all' %}selected{% endif %}>All Years</option>
-                                                <option value="1st" {% if form.year_applicable.value == '1st' %}selected{% endif %}>1st Year</option>
-                                                <option value="2nd" {% if form.year_applicable.value == '2nd' %}selected{% endif %}>2nd Year</option>
-                                                <option value="3rd" {% if form.year_applicable.value == '3rd' %}selected{% endif %}>3rd Year</option>
-                                                <option value="4th" {% if form.year_applicable.value == '4th' %}selected{% endif %}>4th Year</option>
-                                                <option value="5th" {% if form.year_applicable.value == '5th' %}selected{% endif %}>5th Year (Final)</option>
-                                            </select>
-                                            {% if form.year_applicable.errors %}
+                                            <input type="number" 
+                                                   class="form-control {% if form.order.errors %}is-invalid{% endif %}" 
+                                                   id="id_order" 
+                                                   name="order" 
+                                                   value="{{ form.order.value|default:0 }}"
+                                                   min="0"
+                                                   placeholder="0">
+                                            {% if form.order.errors %}
                                                 <div class="invalid-feedback">
-                                                    {{ form.year_applicable.errors.0 }}
+                                                    {{ form.order.errors.0 }}
                                                 </div>
                                             {% endif %}
                                             <div class="form-hint">
-                                                Which year(s) this subject is taught
+                                                Higher numbers appear later in lists
                                             </div>
                                         </div>
                                     </div>
@@ -193,7 +190,7 @@
                                                 </div>
                                             {% endif %}
                                             <div class="form-hint">
-                                                Active subjects are available for MCQ creation
+                                                Active topics are available for MCQ creation
                                             </div>
                                         </div>
                                     </div>
@@ -201,53 +198,53 @@
                             </div>
 
                             {% if object %}
-                            <!-- Topics Section (Edit Mode Only) -->
+                            <!-- MCQs Section (Edit Mode Only) -->
                             <div class="form-section">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="section-title mb-0">
-                                        <i class="fas fa-list me-2"></i>Topics ({{ object.topics.count }})
+                                        <i class="fas fa-question-circle me-2"></i>MCQs ({{ object.questions.count|default:0 }})
                                     </h6>
-                                    <a href="{% url 'staff:topic_list' %}?subject={{ object.id }}" 
+                                    <a href="{% url 'staff:question_add' %}?topic={{ object.id }}" 
                                        class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-external-link-alt me-1"></i>Manage All Topics
+                                        <i class="fas fa-plus me-1"></i>Add MCQ
                                     </a>
                                 </div>
                                 
-                                <div class="topics-preview">
-                                    {% if object.topics.exists %}
-                                        <div class="topics-list">
-                                            {% for topic in object.topics.all|slice:":5" %}
-                                            <div class="topic-item">
-                                                <div class="topic-info">
-                                                    <span class="topic-name">{{ topic.name }}</span>
-                                                    {% if not topic.is_active %}
-                                                        <span class="badge badge-archived">Archived</span>
-                                                    {% endif %}
+                                <div class="mcqs-preview">
+                                    {% if object.questions.exists %}
+                                        <div class="mcqs-stats">
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <div class="stat-card">
+                                                        <div class="stat-number">{{ object.questions.count }}</div>
+                                                        <div class="stat-label">Total MCQs</div>
+                                                    </div>
                                                 </div>
-                                                <div class="topic-stats">
-                                                    <span class="mcq-count">
-                                                        {{ topic.questions.count|default:0 }} MCQs
-                                                    </span>
+                                                <div class="col-4">
+                                                    <div class="stat-card">
+                                                        <div class="stat-number">{{ object.questions.filter|length }}</div>
+                                                        <div class="stat-label">Active</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="stat-card">
+                                                        <div class="stat-number">
+                                                            <a href="{% url 'staff:question_list' %}?topic={{ object.id }}" class="btn btn-sm btn-outline-primary">
+                                                                View All
+                                                            </a>
+                                                        </div>
+                                                        <div class="stat-label">Manage</div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            {% endfor %}
-                                            
-                                            {% if object.topics.count > 5 %}
-                                            <div class="topic-item more-topics">
-                                                <span class="text-muted">
-                                                    <i class="fas fa-plus-circle me-1"></i>
-                                                    {{ object.topics.count|add:"-5" }} more topic{{ object.topics.count|add:"-5"|pluralize }}
-                                                </span>
-                                            </div>
-                                            {% endif %}
                                         </div>
                                     {% else %}
-                                        <div class="empty-topics">
-                                            <i class="fas fa-list-ul"></i>
-                                            <p>No topics created yet</p>
-                                            <a href="{% url 'staff:topic_add' %}?subject={{ object.id }}" 
+                                        <div class="empty-mcqs">
+                                            <i class="fas fa-question-circle"></i>
+                                            <p>No MCQs created yet</p>
+                                            <a href="{% url 'staff:question_add' %}?topic={{ object.id }}" 
                                                class="btn btn-primary btn-sm">
-                                                <i class="fas fa-plus me-1"></i>Add First Topic
+                                                <i class="fas fa-plus me-1"></i>Add First MCQ
                                             </a>
                                         </div>
                                     {% endif %}
@@ -258,8 +255,8 @@
                             <!-- Form Actions -->
                             <div class="form-actions">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <a href="{% url 'staff:subject_list' %}" class="btn btn-secondary">
-                                        <i class="fas fa-arrow-left me-2"></i>Back to Subjects
+                                    <a href="{% url 'staff:topic_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Topics
                                     </a>
                                     
                                     <div class="action-buttons">
@@ -275,7 +272,7 @@
                                         
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-save me-2"></i>
-                                            {% if object %}Update Subject{% else %}Create Subject{% endif %}
+                                            {% if object %}Update Topic{% else %}Create Topic{% endif %}
                                         </button>
                                     </div>
                                 </div>
@@ -295,7 +292,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">
-                    {% if object.is_active %}Archive Subject{% else %}Delete Subject{% endif %}
+                    {% if object.is_active %}Archive Topic{% else %}Delete Topic{% endif %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -305,18 +302,17 @@
                     <h6>Are you sure?</h6>
                     <p>
                         {% if object.is_active %}
-                            This will archive the subject "{{ object.name }}" and make it unavailable for new MCQs.
-                            Existing MCQs and topics will be preserved.
+                            This will archive the topic "{{ object.name }}" and make it unavailable for new MCQs.
+                            Existing MCQs will be preserved.
                         {% else %}
-                            This will permanently delete the subject "{{ object.name }}" and all associated data.
+                            This will permanently delete the topic "{{ object.name }}" and all associated data.
                             This action cannot be undone.
                         {% endif %}
                     </p>
                     
-                    {% if object.topics.exists %}
+                    {% if object.questions.exists %}
                     <div class="impact-warning">
-                        <strong>Impact:</strong> {{ object.topics.count }} topic{{ object.topics.count|pluralize }} 
-                        and {{ object.questions.count|default:0 }} MCQ{{ object.questions.count|default:0|pluralize }} will be affected.
+                        <strong>Impact:</strong> {{ object.questions.count }} MCQ{{ object.questions.count|pluralize }} will be affected.
                     </div>
                     {% endif %}
                 </div>
@@ -327,7 +323,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="{% if object.is_active %}archive{% else %}delete{% endif %}">
                     <button type="submit" class="btn btn-danger">
-                        {% if object.is_active %}Archive Subject{% else %}Delete Subject{% endif %}
+                        {% if object.is_active %}Archive Topic{% else %}Delete Topic{% endif %}
                     </button>
                 </form>
             </div>
@@ -338,5 +334,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'staff/js/subject_form.js' %}"></script>
+<script src="{% static 'staff/js/topics_shared.js' %}"></script>
+<script src="{% static 'staff/js/topic_form.js' %}"></script>
 {% endblock %}

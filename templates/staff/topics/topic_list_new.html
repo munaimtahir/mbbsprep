@@ -1,0 +1,334 @@
+{% extends 'staff/base_admin.html' %}
+{% load static %}
+
+{% block title %}Topics Management - MedPrep Admin{% endblock %}
+{% block page_title %}Topics{% endblock %}
+
+{% block extra_css %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'staff/css/topics.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="topics-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item active text-white">Topic Management</li>
+                        <li class="breadcrumb-item active text-white">All</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-list me-3"></i>
+                    Topic Management
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">Organize course topics and manage subject content</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{% url 'staff:subject_list' %}" class="btn btn-outline-light btn-lg me-2">
+                    <i class="fas fa-book me-2"></i>Manage Subjects
+                </a>
+                <button class="btn btn-light btn-lg" id="addTopicBtn">
+                    <i class="fas fa-plus me-2"></i>Add Topic
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter/Search Section -->
+<div class="filter-section">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="filter-group">
+                    <label for="subjectFilter" class="filter-label">Filter by Subject:</label>
+                    <select class="form-select filter-select" id="subjectFilter">
+                        <option value="">All Subjects</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if request.GET.subject == subject.id|stringformat:"s" %}selected{% endif %}>
+                            {{ subject.name }} ({{ subject.code }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control search-input" placeholder="Search topics by name..." id="searchInput" value="{{ request.GET.search|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="filter-controls">
+                    <select class="form-select filter-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-section">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ stats.total_topics }}</div>
+                    <div class="stats-label">Total Topics</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ stats.active_topics }}</div>
+                    <div class="stats-label">Active Topics</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ stats.archived_topics }}</div>
+                    <div class="stats-label">Archived Topics</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ stats.total_questions }}</div>
+                    <div class="stats-label">Total MCQs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Topics Table -->
+<div class="topics-table-container">
+    <div class="container-fluid">
+        <div class="topics-table">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="60">#</th>
+                        <th>Topic Name</th>
+                        <th width="150">Subject</th>
+                        <th width="120"># MCQs</th>
+                        <th width="100">Status</th>
+                        <th width="180">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="topicsTableBody">
+                    {% for topic in topics %}
+                    <tr class="topic-row" data-topic-id="{{ topic.id }}" data-subject-id="{{ topic.subject.id }}" data-status="{% if topic.is_active %}active{% else %}archived{% endif %}">
+                        <td class="topic-number">{{ forloop.counter }}</td>
+                        <td class="topic-info">
+                            <div class="topic-name">{{ topic.name }}</div>
+                            {% if topic.description %}
+                            <div class="topic-description">{{ topic.description|truncatechars:100 }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="topic-subject">
+                            <div class="subject-chip">
+                                <span class="subject-name">{{ topic.subject.name }}</span>
+                                {% if topic.subject.code %}
+                                <span class="subject-code">({{ topic.subject.code }})</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="mcq-count">
+                            <span class="count-badge">{{ topic.questions.count|default:0 }}</span>
+                        </td>
+                        <td class="topic-status">
+                            {% if topic.is_active %}
+                            <span class="status-badge status-active">
+                                <i class="fas fa-circle"></i> Active
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-archived">
+                                <i class="fas fa-circle"></i> Archived
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="topic-actions">
+                            <button class="btn-action btn-edit" data-topic-id="{{ topic.id }}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            {% if topic.is_active %}
+                            <button class="btn-action btn-archive" data-topic-id="{{ topic.id }}">
+                                <i class="fas fa-archive"></i> Archive
+                            </button>
+                            {% else %}
+                            <button class="btn-action btn-restore" data-topic-id="{{ topic.id }}">
+                                <i class="fas fa-undo"></i> Restore
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-content">
+                                <i class="fas fa-list fa-3x"></i>
+                                <h5>No Topics Found</h5>
+                                <p>
+                                    {% if request.GET.search or request.GET.subject or request.GET.status %}
+                                        No topics match your current filters. Try adjusting your search criteria.
+                                    {% else %}
+                                        Get started by adding your first topic to organize MCQs.
+                                    {% endif %}
+                                </p>
+                                {% if not request.GET.search and not request.GET.subject and not request.GET.status %}
+                                <button class="btn-primary" id="addFirstTopicBtn">
+                                    <i class="fas fa-plus me-2"></i>Add First Topic
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if topics.has_other_pages %}
+<div class="pagination-section">
+    <div class="container-fluid">
+        <div class="pagination-container">
+            <nav aria-label="Topics pagination">
+                <ul class="pagination">
+                    {% if topics.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ topics.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Previous">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in topics.paginator.page_range %}
+                        {% if topics.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > topics.number|add:'-3' and num < topics.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if topics.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ topics.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.subject %}&subject={{ request.GET.subject }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Next">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <div class="pagination-info">
+                Showing {{ topics.start_index }} to {{ topics.end_index }} of {{ topics.paginator.count }} topic{{ topics.paginator.count|pluralize }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add/Edit Topic Modal -->
+<div class="modal fade" id="topicModal" tabindex="-1" aria-labelledby="topicModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="topicModalLabel">Add Topic</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="topicForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="topicId" name="topic_id">
+                    
+                    <div class="mb-3">
+                        <label for="topicName" class="form-label">Topic Name *</label>
+                        <input type="text" class="form-control" id="topicName" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="topicSubject" class="form-label">Subject *</label>
+                        <select class="form-select" id="topicSubject" name="subject_id" required>
+                            <option value="">Select Subject</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.name }} ({{ subject.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="topicDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="topicDescription" name="description" rows="3" placeholder="Optional description..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="topicOrder" class="form-label">Order</label>
+                        <input type="number" class="form-control" id="topicOrder" name="order" min="0" placeholder="0">
+                        <div class="form-text">Higher numbers appear later in lists</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="topicStatus" class="form-label">Status *</label>
+                        <select class="form-select" id="topicStatus" name="is_active" required>
+                            <option value="true">Active</option>
+                            <option value="false">Archived</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary" id="saveTopicBtn">
+                    <i class="fas fa-save me-2"></i>Save Topic
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                <!-- Confirmation message will be set dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-danger" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'staff/js/topics_shared.js' %}"></script>
+<script>
+// Set URLs for AJAX calls
+window.staffUrls.topicCreate = '{% url "staff:topic_ajax_add" %}';
+window.staffUrls.topicEdit = '{% url "staff:topic_ajax_edit" 0 %}';
+window.staffUrls.topicToggleStatus = '{% url "staff:topic_toggle_status" %}';
+window.staffUrls.topicDelete = '{% url "staff:topic_delete" 0 %}';
+</script>
+<script src="{% static 'staff/js/topics.js' %}"></script>
+{% endblock %}

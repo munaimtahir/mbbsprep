@@ -1,7 +1,7 @@
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -341,6 +341,18 @@ class SubjectCreateView(StaffRequiredMixin, CreateView):
     template_name = 'staff/subjects/subject_form.html'
     fields = ['name', 'code', 'description', 'year_applicable', 'is_active']
     success_url = reverse_lazy('staff:subject_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Add Subject'
+        return context
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Add success message
+        from django.contrib import messages
+        messages.success(self.request, f'Subject "{self.object.name}" created successfully!')
+        return response
 
 
 class SubjectEditView(StaffRequiredMixin, UpdateView):
@@ -349,6 +361,39 @@ class SubjectEditView(StaffRequiredMixin, UpdateView):
     template_name = 'staff/subjects/subject_form.html'
     fields = ['name', 'code', 'description', 'year_applicable', 'is_active']
     success_url = reverse_lazy('staff:subject_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Edit {self.object.name}'
+        return context
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Add success message
+        from django.contrib import messages
+        messages.success(self.request, f'Subject "{self.object.name}" updated successfully!')
+        return response
+    
+    def post(self, request, *args, **kwargs):
+        # Handle archive/delete actions
+        action = request.POST.get('action')
+        if action in ['archive', 'delete']:
+            self.object = self.get_object()
+            
+            if action == 'archive':
+                self.object.is_active = False
+                self.object.save()
+                from django.contrib import messages
+                messages.success(request, f'Subject "{self.object.name}" has been archived.')
+            elif action == 'delete':
+                subject_name = self.object.name
+                self.object.delete()
+                from django.contrib import messages
+                messages.success(request, f'Subject "{subject_name}" has been deleted.')
+            
+            return redirect('staff:subject_list')
+        
+        return super().post(request, *args, **kwargs)
 
 
 class TopicListView(StaffRequiredMixin, ListView):
@@ -364,6 +409,36 @@ class TopicCreateView(StaffRequiredMixin, CreateView):
     template_name = 'staff/topics/topic_form.html'
     fields = ['subject', 'name', 'description', 'order', 'is_active']
     success_url = reverse_lazy('staff:topic_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Add Topic'
+        return context
+    
+    def form_valid(self, form):
+        # Set order if not provided
+        if not form.instance.order:
+            subject = form.instance.subject
+            last_topic = subject.topics.order_by('-order').first()
+            form.instance.order = (last_topic.order + 1) if last_topic else 1
+        
+        response = super().form_valid(form)
+        # Add success message
+        from django.contrib import messages
+        messages.success(self.request, f'Topic "{self.object.name}" created successfully!')
+        return response
+    
+    def get_initial(self):
+        """Pre-populate subject if provided in URL"""
+        initial = super().get_initial()
+        subject_id = self.request.GET.get('subject')
+        if subject_id:
+            try:
+                subject = Subject.objects.get(pk=subject_id)
+                initial['subject'] = subject
+            except Subject.DoesNotExist:
+                pass
+        return initial
 
 
 class TopicEditView(StaffRequiredMixin, UpdateView):
@@ -372,3 +447,319 @@ class TopicEditView(StaffRequiredMixin, UpdateView):
     template_name = 'staff/topics/topic_form.html'
     fields = ['subject', 'name', 'description', 'order', 'is_active']
     success_url = reverse_lazy('staff:topic_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Edit {self.object.name}'
+        return context
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Add success message
+        from django.contrib import messages
+        messages.success(self.request, f'Topic "{self.object.name}" updated successfully!')
+        return response
+    
+    def post(self, request, *args, **kwargs):
+        # Handle archive/delete actions
+        action = request.POST.get('action')
+        if action in ['archive', 'delete']:
+            self.object = self.get_object()
+            
+            if action == 'archive':
+                self.object.is_active = False
+                self.object.save()
+                from django.contrib import messages
+                messages.success(request, f'Topic "{self.object.name}" has been archived.')
+            elif action == 'delete':
+                # Check if topic has questions
+                question_count = 0
+                try:
+                    from core.models import Question
+                    question_count = Question.objects.filter(topic=self.object).count()
+                except ImportError:
+                    pass
+                
+                if question_count > 0:
+                    from django.contrib import messages
+                    messages.error(request, f'Cannot delete topic "{self.object.name}" because it has {question_count} associated MCQ(s). Archive it instead.')
+                else:
+                    topic_name = self.object.name
+                    self.object.delete()
+                    from django.contrib import messages
+                    messages.success(request, f'Topic "{topic_name}" has been deleted.')
+            
+            return redirect('staff:topic_list')
+        
+        return super().post(request, *args, **kwargs)
+
+
+# Enhanced Topic Views for new Topics Management Page
+class TopicListEnhancedView(StaffRequiredMixin, ListView):
+    """Enhanced list view for topics management"""
+    model = Topic
+    template_name = 'staff/topics/topic_list_new.html'
+    context_object_name = 'topics'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        """Filter topics based on search, subject, and status"""
+        queryset = Topic.objects.select_related('subject').all()
+        
+        # Search functionality
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        
+        # Subject filter
+        subject_id = self.request.GET.get('subject', '').strip()
+        if subject_id:
+            queryset = queryset.filter(subject_id=subject_id)
+        
+        # Status filter
+        status = self.request.GET.get('status', '').strip()
+        if status == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status == 'archived':
+            queryset = queryset.filter(is_active=False)
+        
+        return queryset.order_by('subject__name', 'order', 'name')
+    
+    def get_context_data(self, **kwargs):
+        """Add additional context for the template"""
+        context = super().get_context_data(**kwargs)
+        
+        # Get all subjects for filter dropdown
+        context['subjects'] = Subject.objects.filter(is_active=True).order_by('name')
+        
+        # Calculate statistics
+        all_topics = Topic.objects.all()
+        context['stats'] = {
+            'total_topics': all_topics.count(),
+            'active_topics': all_topics.filter(is_active=True).count(),
+            'archived_topics': all_topics.filter(is_active=False).count(),
+            'total_questions': 0  # Will be calculated if Question model exists
+        }
+        
+        # Get total questions count
+        try:
+            from core.models import Question
+            context['stats']['total_questions'] = Question.objects.count()
+        except ImportError:
+            pass
+        
+        return context
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicToggleStatusView(StaffRequiredMixin, View):
+    """AJAX view to toggle topic active status (archive/restore)"""
+    
+    def post(self, request):
+        try:
+            topic_id = request.POST.get('topic_id')
+            action = request.POST.get('action')  # 'archive' or 'restore'
+            
+            if not topic_id or action not in ['archive', 'restore']:
+                return JsonResponse({'success': False, 'message': 'Invalid request parameters'})
+            
+            topic = get_object_or_404(Topic, pk=topic_id)
+            
+            if action == 'archive':
+                topic.is_active = False
+                message = f'Topic "{topic.name}" has been archived'
+            else:  # restore
+                topic.is_active = True
+                message = f'Topic "{topic.name}" has been restored'
+            
+            topic.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'topic_id': topic.id,
+                'is_active': topic.is_active
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error updating topic status: {str(e)}'})
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicDeleteView(StaffRequiredMixin, View):
+    """AJAX view to delete a topic"""
+    
+    def post(self, request, pk):
+        try:
+            topic = get_object_or_404(Topic, pk=pk)
+            topic_name = topic.name
+            
+            # Check if topic has associated questions
+            question_count = 0
+            try:
+                from core.models import Question
+                question_count = Question.objects.filter(topic=topic).count()
+            except ImportError:
+                pass
+            
+            if question_count > 0:
+                return JsonResponse({
+                    'success': False, 
+                    'message': f'Cannot delete topic "{topic_name}" because it has {question_count} associated MCQ(s). Archive it instead.'
+                })
+            
+            topic.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Topic "{topic_name}" has been deleted successfully.'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error deleting topic: {str(e)}'})
+
+
+# Update existing topic views to use AJAX
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicCreateAjaxEnhancedView(StaffRequiredMixin, View):
+    """Enhanced AJAX view to create a new topic"""
+    
+    def post(self, request):
+        try:
+            data = {
+                'subject_id': request.POST.get('subject_id', '').strip(),
+                'name': request.POST.get('name', '').strip(),
+                'description': request.POST.get('description', '').strip(),
+                'order': request.POST.get('order', 0),
+                'is_active': request.POST.get('is_active', 'true') == 'true'
+            }
+            
+            # Validation
+            if not data['name']:
+                return JsonResponse({'success': False, 'message': 'Topic name is required'})
+            
+            if not data['subject_id']:
+                return JsonResponse({'success': False, 'message': 'Subject is required'})
+            
+            # Get subject
+            try:
+                subject = Subject.objects.get(pk=data['subject_id'])
+            except Subject.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Selected subject does not exist'})
+            
+            # Check for duplicate name within the subject
+            if subject.topics.filter(name=data['name']).exists():
+                return JsonResponse({'success': False, 'message': 'A topic with this name already exists in this subject'})
+            
+            # Set order if not provided
+            if not data['order']:
+                last_topic = subject.topics.order_by('-order').first()
+                data['order'] = (last_topic.order + 1) if last_topic else 1
+            
+            # Create topic
+            topic = Topic.objects.create(
+                subject=subject,
+                name=data['name'],
+                description=data['description'],
+                order=int(data['order']),
+                is_active=data['is_active']
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Topic created successfully',
+                'topic': {
+                    'id': topic.id,
+                    'name': topic.name,
+                    'description': topic.description,
+                    'subject_id': topic.subject.id,
+                    'subject_name': topic.subject.name,
+                    'order': topic.order,
+                    'is_active': topic.is_active,
+                    'question_count': 0
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error creating topic: {str(e)}'})
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TopicEditAjaxEnhancedView(StaffRequiredMixin, View):
+    """Enhanced AJAX view to edit an existing topic"""
+    
+    def get(self, request, pk):
+        """Get topic data for editing"""
+        try:
+            topic = get_object_or_404(Topic, pk=pk)
+            return JsonResponse({
+                'success': True,
+                'topic': {
+                    'id': topic.id,
+                    'name': topic.name,
+                    'description': topic.description,
+                    'subject_id': topic.subject.id,
+                    'subject_name': topic.subject.name,
+                    'order': topic.order,
+                    'is_active': topic.is_active,
+                    'question_count': getattr(topic, 'questions', Topic.objects.none()).count()
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error loading topic: {str(e)}'})
+    
+    def post(self, request, pk):
+        """Update topic data"""
+        try:
+            topic = get_object_or_404(Topic, pk=pk)
+            
+            data = {
+                'subject_id': request.POST.get('subject_id', '').strip(),
+                'name': request.POST.get('name', '').strip(),
+                'description': request.POST.get('description', '').strip(),
+                'order': request.POST.get('order', topic.order),
+                'is_active': request.POST.get('is_active', 'true') == 'true'
+            }
+            
+            # Validation
+            if not data['name']:
+                return JsonResponse({'success': False, 'message': 'Topic name is required'})
+            
+            if not data['subject_id']:
+                return JsonResponse({'success': False, 'message': 'Subject is required'})
+            
+            # Get subject
+            try:
+                subject = Subject.objects.get(pk=data['subject_id'])
+            except Subject.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Selected subject does not exist'})
+            
+            # Check for duplicate name within the subject (excluding current topic)
+            if subject.topics.exclude(pk=pk).filter(name=data['name']).exists():
+                return JsonResponse({'success': False, 'message': 'A topic with this name already exists in this subject'})
+            
+            # Update topic
+            topic.subject = subject
+            topic.name = data['name']
+            topic.description = data['description']
+            topic.order = int(data['order']) if data['order'] else 0
+            topic.is_active = data['is_active']
+            topic.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Topic updated successfully',
+                'topic': {
+                    'id': topic.id,
+                    'name': topic.name,
+                    'description': topic.description,
+                    'subject_id': topic.subject.id,
+                    'subject_name': topic.subject.name,
+                    'order': topic.order,
+                    'is_active': topic.is_active,
+                    'question_count': getattr(topic, 'questions', Topic.objects.none()).count()
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error updating topic: {str(e)}'})
