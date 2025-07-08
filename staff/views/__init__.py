@@ -3,10 +3,13 @@ from .dashboard_views import DashboardView
 from .user_views import UserListView, UserDetailView, UserEditView, UserCreateView, BulkUserUploadView, UserExportView
 from .question_views import (
     QuestionListView, QuestionCreateView, QuestionEditView, 
-    QuestionDeleteView, BulkQuestionUploadView
+    QuestionDeleteView, BulkQuestionUploadView, QuestionBulkActionView,
+    QuestionExportView, QuestionToggleStatusView, GetTopicsAjaxView
 )
 from .subject_views import (
     SubjectListView, SubjectCreateView, SubjectEditView,
+    SubjectCreateAjaxView, SubjectEditAjaxView, SubjectToggleStatusView,
+    GetSubjectTopicsView, TopicCreateAjaxView, TopicEditAjaxView,
     TopicListView, TopicCreateView, TopicEditView
 )
 from .tag_views import TagListView, TagCreateView, TagEditView, TagDeleteView
@@ -23,8 +26,11 @@ __all__ = [
     'AdminLoginView', 'AdminLogoutView', 'DashboardView',
     'UserListView', 'UserDetailView', 'UserEditView', 'UserCreateView', 'BulkUserUploadView', 'UserExportView',
     'QuestionListView', 'QuestionCreateView', 'QuestionEditView', 
-    'QuestionDeleteView', 'BulkQuestionUploadView',
+    'QuestionDeleteView', 'BulkQuestionUploadView', 'QuestionBulkActionView',
+    'QuestionExportView', 'QuestionToggleStatusView', 'GetTopicsAjaxView',
     'SubjectListView', 'SubjectCreateView', 'SubjectEditView',
+    'SubjectCreateAjaxView', 'SubjectEditAjaxView', 'SubjectToggleStatusView',
+    'GetSubjectTopicsView', 'TopicCreateAjaxView', 'TopicEditAjaxView',
     'TopicListView', 'TopicCreateView', 'TopicEditView',
     'TagListView', 'TagCreateView', 'TagEditView', 'TagDeleteView',
     'QuizAttemptListView', 'LeaderboardView',

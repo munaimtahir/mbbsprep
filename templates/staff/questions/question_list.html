@@ -1,30 +1,392 @@
 {% extends 'staff/base_admin.html' %}
+{% load static %}
 
-{% block title %}Questions - MedPrep Admin{% endblock %}
-{% block page_title %}Question Management{% endblock %}
+{% block title %}MCQ Management - MedPrep Admin{% endblock %}
+{% block page_title %}MCQ List{% endblock %}
+
+{% block extra_css %}
+<!-- Add CSRF token for AJAX calls -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'staff/css/question_list.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <p class="text-muted mb-0">Manage MCQs, add new questions, and organize content</p>
-    </div>
-    <div>
-        <a href="{% url 'staff:question_add' %}" class="btn-admin btn-admin-primary me-2">
-            <i class="fas fa-plus"></i>
-            Add Question
-        </a>
-        <a href="{% url 'staff:question_bulk_upload' %}" class="btn-admin btn-admin-outline">
-            <i class="fas fa-upload"></i>
-            Bulk Upload
-        </a>
+<!-- Header -->
+<div class="mcq-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item active text-white">MCQ List</li>
+                        <li class="breadcrumb-item active text-white">All</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-question-circle me-3"></i>
+                    MCQ Management
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">Manage questions, search by content, and organize MCQs</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{% url 'staff:question_add' %}" class="btn btn-light btn-lg me-2">
+                    <i class="fas fa-plus me-2"></i>Add MCQ
+                </a>
+                <a href="{% url 'staff:question_bulk_upload' %}" class="btn btn-outline-light btn-lg me-2">
+                    <i class="fas fa-upload me-2"></i>Bulk Upload
+                </a>
+                <a href="{% url 'staff:question_export' %}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-download me-2"></i>Export
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="action-card">
-    <h5 class="action-card-title">
-        <i class="fas fa-question-circle"></i>
-        All Questions
-    </h5>
-    <p class="text-muted">Question management interface coming soon...</p>
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="stats-card">
+            <div class="stats-number">{{ stats.total }}</div>
+            <div class="stats-label">Total MCQs</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card">
+            <div class="stats-number text-success">{{ stats.active }}</div>
+            <div class="stats-label">Active</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card">
+            <div class="stats-number text-warning">{{ stats.inactive }}</div>
+            <div class="stats-label">Inactive</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card">
+            <div class="stats-number text-info">{{ stats.premium }}</div>
+            <div class="stats-label">Premium</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card">
+            <div class="stats-number text-secondary">{{ stats.free }}</div>
+            <div class="stats-label">Free</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card">
+            <div class="stats-number text-primary">{{ questions|length }}</div>
+            <div class="stats-label">Filtered</div>
+        </div>
+    </div>
 </div>
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="get" id="filterForm">
+        {% csrf_token %}
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-search me-1"></i>Search MCQs
+                </label>
+                <input type="text" name="search" class="form-control" 
+                       value="{{ current_search }}" 
+                       placeholder="Search by question, topic, tag, or content...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Subject</label>
+                <select name="subject" class="form-select" id="subjectFilter">
+                    <option value="">All Subjects</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject.id }}" {% if current_subject == subject.id|stringformat:"s" %}selected{% endif %}>
+                        {{ subject.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Topic</label>
+                <select name="topic" class="form-select" id="topicFilter">
+                    <option value="">All Topics</option>
+                    {% for topic in topics %}
+                    <option value="{{ topic.id }}" {% if current_topic == topic.id|stringformat:"s" %}selected{% endif %}>
+                        {{ topic.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Difficulty</label>
+                <select name="difficulty" class="form-select">
+                    <option value="">All Levels</option>
+                    {% for value, label in difficulty_choices %}
+                    <option value="{{ value }}" {% if current_difficulty == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filter
+                    </button>
+                    <a href="{% url 'staff:question_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="premium" {% if current_status == 'premium' %}selected{% endif %}>Premium</option>
+                    <option value="free" {% if current_status == 'free' %}selected{% endif %}>Free</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Tag</label>
+                <select name="tag" class="form-select">
+                    <option value="">All Tags</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.id }}" {% if current_tag == tag.id|stringformat:"s" %}selected{% endif %}>
+                        {{ tag.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Active Filters -->
+{% if current_search or current_subject or current_topic or current_difficulty or current_status or current_tag %}
+<div class="mb-3">
+    <span class="fw-semibold me-2">Active Filters:</span>
+    {% if current_search %}
+        <span class="filter-chip">
+            Search: "{{ current_search }}"
+            <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="text-white ms-1">×</a>
+        </span>
+    {% endif %}
+    {% if current_subject %}
+        <span class="filter-chip">
+            Subject: {{ current_subject }}
+            <a href="?{% for key, value in request.GET.items %}{% if key != 'subject' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="text-white ms-1">×</a>
+        </span>
+    {% endif %}
+    {% if current_difficulty %}
+        <span class="filter-chip">
+            Difficulty: {{ current_difficulty|title }}
+            <a href="?{% for key, value in request.GET.items %}{% if key != 'difficulty' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="text-white ms-1">×</a>
+        </span>
+    {% endif %}
+    {% if current_status %}
+        <span class="filter-chip">
+            Status: {{ current_status|title }}
+            <a href="?{% for key, value in request.GET.items %}{% if key != 'status' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="text-white ms-1">×</a>
+        </span>
+    {% endif %}
+    <a href="{% url 'staff:question_list' %}" class="btn btn-outline-secondary btn-sm ms-2">
+        <i class="fas fa-times me-1"></i>Clear All
+    </a>
+</div>
+{% endif %}
+
+<!-- Bulk Actions -->
+<div class="bulk-actions" id="bulkActions">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <span class="fw-semibold">
+                <span id="selectedCount">0</span> MCQs selected
+            </span>
+        </div>
+        <div class="col-md-6 text-end">
+            <button class="btn btn-sm btn-success me-2 bulk-action-btn" data-action="activate">
+                <i class="fas fa-check me-1"></i>Activate
+            </button>
+            <button class="btn btn-sm btn-warning me-2 bulk-action-btn" data-action="deactivate">
+                <i class="fas fa-pause me-1"></i>Deactivate
+            </button>
+            <button class="btn btn-sm btn-info me-2 bulk-action-btn" data-action="make_premium">
+                <i class="fas fa-crown me-1"></i>Make Premium
+            </button>
+            <button class="btn btn-sm btn-secondary me-2 bulk-action-btn" data-action="make_free">
+                <i class="fas fa-unlock me-1"></i>Make Free
+            </button>
+            <button class="btn btn-sm btn-danger bulk-action-btn" data-action="delete">
+                <i class="fas fa-trash me-1"></i>Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MCQ Table -->
+<div class="mcq-table">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th width="40">
+                    <input type="checkbox" id="selectAll" class="form-check-input">
+                </th>
+                <th width="60">#</th>
+                <th width="120">Subject</th>
+                <th width="120">Topic</th>
+                <th>MCQ Text</th>
+                <th width="80">Status</th>
+                <th width="100">Tags</th>
+                <th width="180">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in questions %}
+            <tr>
+                <td>
+                    <input type="checkbox" class="form-check-input question-checkbox" 
+                           value="{{ question.id }}">
+                </td>
+                <td class="text-muted fw-mono">{{ question.id }}</td>
+                <td>
+                    <span class="badge bg-primary">{{ question.topic.subject.name }}</span>
+                </td>
+                <td>
+                    <small class="text-muted">{{ question.topic.name }}</small>
+                </td>
+                <td>
+                    <div class="question-text" 
+                         title="{{ question.question_text }}"
+                         data-bs-toggle="tooltip"
+                         data-bs-html="true"
+                         data-bs-title="{{ question.question_text|truncatewords:30 }}">
+                        {{ question.question_text|truncatewords:15 }}
+                    </div>
+                    <div class="mt-1">
+                        <span class="difficulty-{{ question.difficulty }}">
+                            <i class="fas fa-signal me-1"></i>{{ question.get_difficulty_display }}
+                        </span>
+                        {% if question.is_premium %}
+                        <span class="badge bg-warning ms-2">
+                            <i class="fas fa-crown me-1"></i>Premium
+                        </span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    {% if question.is_active %}
+                        <span class="status-badge status-active">Active</span>
+                    {% else %}
+                        <span class="status-badge status-inactive">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for tag in question.tags.all|slice:":3" %}
+                        <span class="tag-chip">{{ tag.name }}</span>
+                    {% endfor %}
+                    {% if question.tags.count > 3 %}
+                        <span class="tag-chip">+{{ question.tags.count|add:"-3" }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'staff:question_edit' question.pk %}" 
+                       class="btn-action btn-edit" title="Edit MCQ">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button class="btn-action btn-toggle toggle-status-btn" 
+                            data-question-id="{{ question.id }}"
+                            title="{% if question.is_active %}Deactivate{% else %}Activate{% endif %}">
+                        <i class="fas fa-{% if question.is_active %}pause{% else %}play{% endif %}"></i>
+                        {% if question.is_active %}Pause{% else %}Activate{% endif %}
+                    </button>
+                    <button class="btn-action btn-delete delete-question-btn" 
+                            data-question-id="{{ question.id }}"
+                            title="Delete MCQ">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-question-circle text-muted display-1 mb-3"></i>
+                        <h4 class="text-muted mb-3">No MCQs Found</h4>
+                        <p class="text-muted mb-4">
+                            {% if current_search or current_subject or current_topic %}
+                                No MCQs match your current filters. Try adjusting your search criteria.
+                            {% else %}
+                                You haven't added any MCQs yet. Start by creating your first question.
+                            {% endif %}
+                        </p>
+                        <a href="{% url 'staff:question_add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Your First MCQ
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination-container">
+        <nav aria-label="MCQ pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        
+        <div class="text-center mt-3 text-muted">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} MCQs
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'staff/js/mcq_shared.js' %}"></script>
+<script>
+// Set URLs for AJAX calls
+window.staffUrls.getTopicsAjax = '{% url "staff:get_topics_ajax" %}';
+window.staffUrls.questionToggleStatus = '{% url "staff:question_toggle_status" %}';
+window.staffUrls.questionDelete = '{% url "staff:question_delete" 0 %}';
+window.staffUrls.questionBulkAction = '{% url "staff:question_bulk_action" %}';
+</script>
+<script src="{% static 'staff/js/question_list.js' %}"></script>
 {% endblock %}

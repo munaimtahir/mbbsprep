@@ -3,6 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from core.models import Question, Option, Subject, Topic, Tag, Note, VideoResource, Flashcard, PaymentProof, UserProfile
 from django.forms import inlineformset_factory
+import os
 
 
 class StaffLoginForm(AuthenticationForm):
@@ -67,73 +68,196 @@ class TagForm(forms.ModelForm):
 
 
 class QuestionForm(forms.ModelForm):
-    """Form for creating and editing questions"""
+    """Enhanced form for creating and editing questions"""
+    
+    # Add subject field for dynamic topic filtering
+    subject = forms.ModelChoiceField(
+        queryset=Subject.objects.filter(is_active=True),
+        empty_label="Select Subject",
+        widget=forms.Select(attrs={
+            'class': 'form-select form-select-lg',
+            'id': 'id_subject'
+        }),
+        required=True
+    )
+    
+    # Add reference field
+    reference = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Robbins p.117, Gray\'s Anatomy Ch.5'
+        }),
+        help_text="Optional: Add reference source"
+    )
+    
+    # Enhanced tags field with creation capability
+    new_tags = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Type new tag names, separated by commas...',
+            'id': 'id_new_tags'
+        }),
+        help_text="Create new tags by typing them here (comma-separated)"
+    )
     
     class Meta:
         model = Question
-        fields = ['topic', 'question_text', 'explanation', 'difficulty', 'is_premium', 'tags', 'is_active'
-        ]
+        fields = ['subject', 'topic', 'question_text', 'explanation', 'reference', 
+                  'difficulty', 'is_premium', 'tags', 'is_active']
         widgets = {
             'topic': forms.Select(attrs={
-                'class': 'form-control'
+                'class': 'form-select form-select-lg',
+                'id': 'id_topic'
             }),
             'question_text': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 4,
-                'placeholder': 'Enter the question text'
+                'class': 'form-control form-control-lg',
+                'rows': 6,
+                'placeholder': 'Enter the complete MCQ question text here...\n\nExample:\nA 45-year-old male presents with chest pain and shortness of breath. ECG shows ST elevation in leads II, III, and aVF. Which coronary artery is most likely affected?'
             }),
             'explanation': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Explain the correct answer'
+                'rows': 4,
+                'placeholder': 'Provide a clear explanation for the correct answer...\n\nThis helps students understand the concept and learn from their mistakes.'
             }),
             'difficulty': forms.Select(attrs={
-                'class': 'form-control'
+                'class': 'form-select form-select-lg'
             }),
             'is_premium': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'form-check-input',
+                'id': 'id_is_premium'
             }),
-            'tags': forms.CheckboxSelectMultiple(),
+            'tags': forms.CheckboxSelectMultiple(attrs={
+                'class': 'tag-checkbox-list'
+            }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'form-check-input',
+                'id': 'id_is_active'
             })
         }
-
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['tags'].queryset = Tag.objects.filter(is_active=True)
+        
+        # Set initial values
+        self.fields['is_active'].initial = True
+        self.fields['difficulty'].empty_label = "Select Difficulty Level"
+        self.fields['topic'].empty_label = "Select Topic (choose subject first)"
+        
+        # Add required field styling
+        for field_name in ['subject', 'topic', 'question_text']:
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs['required'] = True
+        
+        # Set labels
+        self.fields['subject'].label = "Medical Subject *"
+        self.fields['topic'].label = "Topic *"
+        self.fields['question_text'].label = "MCQ Question Text *"
+        self.fields['explanation'].label = "Answer Explanation"
+        self.fields['reference'].label = "Reference Source"
+        self.fields['difficulty'].label = "Difficulty Level *"
+        self.fields['is_premium'].label = "Premium Question"
+        self.fields['tags'].label = "Existing Tags"
+        self.fields['new_tags'].label = "Create New Tags"
+        self.fields['is_active'].label = "Active Question"
+        
+        # Set help texts
+        self.fields['subject'].help_text = "Select the medical subject for this question"
+        self.fields['topic'].help_text = "Choose specific topic within the subject"
+        self.fields['question_text'].help_text = "Write the complete question with all necessary details"
+        self.fields['explanation'].help_text = "Optional: Explain why the correct answer is right"
+        self.fields['difficulty'].help_text = "Assess the difficulty level for students"
+        self.fields['is_premium'].help_text = "Check if this question requires premium subscription"
+        self.fields['tags'].help_text = "Select from existing tags to categorize this question"
+        self.fields['new_tags'].help_text = "Create new tags by typing them here (comma-separated)"
+        
+        # If editing an existing question, set the subject
+        if self.instance and self.instance.pk and self.instance.topic:
+            self.fields['subject'].initial = self.instance.topic.subject
+            # Filter topics based on the subject
+            self.fields['topic'].queryset = Topic.objects.filter(
+                subject=self.instance.topic.subject,
+                is_active=True
+            )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        subject = cleaned_data.get('subject')
+        topic = cleaned_data.get('topic')
+        
+        # Validate topic belongs to selected subject
+        if subject and topic and topic.subject != subject:
+            raise forms.ValidationError(
+                "Selected topic does not belong to the selected subject."
+            )
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        
+        # Handle new tags creation
+        new_tags_text = self.cleaned_data.get('new_tags', '').strip()
+        if new_tags_text:
+            # Split by comma and create new tags
+            tag_names = [name.strip() for name in new_tags_text.split(',') if name.strip()]
+            created_tags = []
+            
+            for tag_name in tag_names:
+                # Create or get existing tag
+                tag, created = Tag.objects.get_or_create(
+                    name=tag_name,
+                    defaults={'is_active': True}
+                )
+                created_tags.append(tag)
+            
+            # Add new tags to the question if commit is True
+            if commit:
+                instance.tags.add(*created_tags)
+        
+        return instance
 
 
 class OptionForm(forms.ModelForm):
-    """Form for question options"""
+    """Enhanced form for question options"""
     
     class Meta:
         model = Option
         fields = ['option_text', 'is_correct', 'order']
         widgets = {
             'option_text': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Option text'
+                'class': 'form-control form-control-lg option-input',
+                'placeholder': 'Enter option text...'
             }),
-            'is_correct': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+            'is_correct': forms.RadioSelect(attrs={
+                'class': 'form-check-input correct-answer-radio'
             }),
-            'order': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 0
-            })
+            'order': forms.HiddenInput()
         }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['option_text'].label = ""
+        self.fields['is_correct'].label = "Correct Answer"
+        self.fields['order'].label = ""
 
 
-# Create formset for options
+# Enhanced formset for options with better defaults
 OptionFormSet = inlineformset_factory(
     Question, 
     Option, 
     form=OptionForm,
-    extra=4,  # Show 4 option forms by default
+    extra=4,  # Show 4 option forms by default (A, B, C, D)
     can_delete=True,
-    min_num=2,  # Minimum 2 options
-    validate_min=True
+    min_num=2,  # Minimum 2 options required
+    validate_min=True,
+    max_num=6,  # Allow up to 6 options maximum
+    widgets={
+        'DELETE': forms.HiddenInput()
+    }
 )
 
 
@@ -141,20 +265,69 @@ class BulkQuestionUploadForm(forms.Form):
     """Form for bulk uploading questions via CSV/Excel"""
     
     csv_file = forms.FileField(
-        label="CSV/Excel File",
+        label="Upload File",
         widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': '.csv,.xlsx,.xls'
+            'class': 'form-control form-control-lg',
+            'accept': '.csv,.xlsx,.xls',
+            'id': 'csvFile'
         }),
-        help_text="Upload a CSV or Excel file with questions"
+        help_text="Upload a CSV or Excel file with questions (.csv, .xlsx, .xls supported)"
     )
-    subject = forms.ModelChoiceField(
+    
+    # Optional default fields (used if not specified in file)
+    default_subject = forms.ModelChoiceField(
         queryset=Subject.objects.filter(is_active=True),
+        required=False,
+        empty_label="Select default subject (optional)",
         widget=forms.Select(attrs={
-            'class': 'form-control'
+            'class': 'form-control form-control-lg'
         }),
-        help_text="Default subject for questions (can be overridden in file)"
+        help_text="Default subject applied to all questions if not specified in file"
     )
+    
+    default_difficulty = forms.ChoiceField(
+        choices=[('', 'Select default difficulty (optional)')] + Question.DIFFICULTY_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-control form-control-lg'
+        }),
+        help_text="Default difficulty applied to all questions if not specified in file"
+    )
+    
+    default_tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.filter(is_active=True),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-check-input'
+        }),
+        help_text="Default tags applied to all questions (in addition to any tags in file)"
+    )
+    
+    overwrite_existing = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        help_text="Check to overwrite questions with identical text"
+    )
+    
+    def clean_csv_file(self):
+        file = self.cleaned_data['csv_file']
+        if file:
+            # Check file size (limit to 10MB)
+            if file.size > 10 * 1024 * 1024:
+                raise forms.ValidationError("File size cannot exceed 10MB")
+            
+            # Check file extension
+            allowed_extensions = ['.csv', '.xlsx', '.xls']
+            file_extension = os.path.splitext(file.name)[1].lower()
+            if file_extension not in allowed_extensions:
+                raise forms.ValidationError(
+                    f"File type not supported. Please upload a CSV or Excel file. "
+                    f"Allowed extensions: {', '.join(allowed_extensions)}"
+                )
+        return file
 
 
 class ResourceForm(forms.ModelForm):

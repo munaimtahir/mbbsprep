@@ -70,6 +70,7 @@ class Question(models.Model):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='questions')
     question_text = models.TextField()
     explanation = models.TextField()
+    reference = models.CharField(max_length=200, blank=True, help_text="Reference source (e.g., Robbins p.117)")
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium')
     is_premium = models.BooleanField(default=False)  # Premium questions for paid users
     is_active = models.BooleanField(default=True)

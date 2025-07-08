@@ -25,14 +25,24 @@ urlpatterns = [
     path('questions/<int:pk>/edit/', views.QuestionEditView.as_view(), name='question_edit'),
     path('questions/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question_delete'),
     path('questions/bulk-upload/', views.BulkQuestionUploadView.as_view(), name='question_bulk_upload'),
+    path('questions/bulk-action/', views.QuestionBulkActionView.as_view(), name='question_bulk_action'),
+    path('questions/export/', views.QuestionExportView.as_view(), name='question_export'),
+    path('questions/toggle-status/', views.QuestionToggleStatusView.as_view(), name='question_toggle_status'),
+    path('ajax/get-topics/', views.GetTopicsAjaxView.as_view(), name='get_topics_ajax'),
     
     # Subject and Topic Management
     path('subjects/', views.SubjectListView.as_view(), name='subject_list'),
     path('subjects/add/', views.SubjectCreateView.as_view(), name='subject_add'),
     path('subjects/<int:pk>/edit/', views.SubjectEditView.as_view(), name='subject_edit'),
+    path('subjects/ajax/add/', views.SubjectCreateAjaxView.as_view(), name='subject_ajax_add'),
+    path('subjects/ajax/<int:pk>/edit/', views.SubjectEditAjaxView.as_view(), name='subject_ajax_edit'),
+    path('subjects/toggle-status/', views.SubjectToggleStatusView.as_view(), name='subject_toggle_status'),
+    path('subjects/<int:pk>/topics/', views.GetSubjectTopicsView.as_view(), name='get_subject_topics'),
     path('topics/', views.TopicListView.as_view(), name='topic_list'),
     path('topics/add/', views.TopicCreateView.as_view(), name='topic_add'),
     path('topics/<int:pk>/edit/', views.TopicEditView.as_view(), name='topic_edit'),
+    path('topics/ajax/add/', views.TopicCreateAjaxView.as_view(), name='topic_ajax_add'),
+    path('topics/ajax/<int:pk>/edit/', views.TopicEditAjaxView.as_view(), name='topic_ajax_edit'),
     
     # Tag Management
     path('tags/', views.TagListView.as_view(), name='tag_list'),

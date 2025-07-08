@@ -1,0 +1,61 @@
+MCQ Management System Debug Report
+==================================================
+Generated: 2025-07-08 08:44:27.416619+00:00
+
+ISSUES:
+SUCCESSES:
+[PASS] setup: Admin user created and logged in
+[PASS] database: Subjects: 7 records
+[PASS] database: Topics: 33 records
+[PASS] database: Tags: 17 records
+[PASS] database: Questions: 37 records
+[PASS] database: Options: 124 records
+[PASS] database: All questions have topics assigned
+[PASS] database: 31 questions have options
+[PASS] database: 31 questions have correct answers marked
+[PASS] database: No orphaned topics found
+[PASS] permissions: staff:question_list properly protected (Status: 302)
+[PASS] permissions: staff:question_add properly protected (Status: 302)
+[PASS] permissions: staff:question_bulk_upload properly protected (Status: 302)
+[PASS] mcq_list: Page title/heading present
+[PASS] mcq_list: Search functionality present
+[PASS] mcq_list: Filter options present
+[PASS] mcq_list: Question list/table present
+[PASS] mcq_list: Add question link present
+[PASS] mcq_list: Bulk upload link present
+[PASS] mcq_list: Questions are displayed (37 total)
+[PASS] mcq_list: Search functionality working
+[PASS] add_mcq: Subject field present
+[PASS] add_mcq: Topic field present
+[PASS] add_mcq: Question text field present
+[PASS] add_mcq: Option fields present
+[PASS] add_mcq: Difficulty field present
+[PASS] add_mcq: Explanation field present
+[PASS] add_mcq: Reference field present
+[PASS] add_mcq: Tags field present
+[PASS] add_mcq: CSRF protection present
+[PASS] add_mcq: Save button present
+[PASS] add_mcq: Form submission successful (test question created)
+[PASS] add_mcq: Test question cleaned up
+[PASS] edit_mcq: Question text pre-filled
+[PASS] edit_mcq: Topic pre-selected
+[PASS] edit_mcq: Difficulty pre-selected
+[PASS] edit_mcq: Explanation pre-filled
+[PASS] edit_mcq: CSRF protection
+[PASS] edit_mcq: Save button present
+[PASS] edit_mcq: Delete button present
+[PASS] edit_mcq: Reset/Cancel button present
+[PASS] edit_mcq: Edit form submission successful
+[PASS] edit_mcq: Question content actually updated
+[PASS] edit_mcq: Original content restored
+[PASS] bulk_upload: File upload field present
+[PASS] bulk_upload: CSV/Excel support mentioned present
+[PASS] bulk_upload: Template download option present
+[PASS] bulk_upload: Default field options present
+[PASS] bulk_upload: Default subject field present
+[PASS] bulk_upload: Default difficulty field present
+[PASS] bulk_upload: Default tags field present
+[PASS] bulk_upload: CSRF protection present
+[PASS] bulk_upload: Template download working
+[PASS] ajax: Get topics AJAX endpoint working
+[PASS] ajax: AJAX response is valid JSON

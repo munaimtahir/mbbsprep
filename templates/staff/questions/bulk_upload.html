@@ -1,25 +1,343 @@
 {% extends 'staff/base_admin.html' %}
+{% load static %}
 
-{% block title %}Bulk Upload - MedPrep Admin{% endblock %}
+{% block title %}Bulk Upload MCQs - MedPrep Admin{% endblock %}
+{% block page_title %}Bulk Upload MCQs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'staff/css/bulk_upload.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-        <i class="fas fa-upload me-2"></i>Bulk Upload Questions
-    </h1>
-    <div>
-        <a href="{% url 'staff:question_list' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i>Back to Questions
-        </a>
+<!-- Header -->
+<div class="bulk-upload-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'staff:question_list' %}" class="text-white-50">MCQs</a></li>
+                        <li class="breadcrumb-item active text-white">Bulk Upload</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-upload me-3"></i>
+                    Bulk Upload MCQs
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">Upload multiple choice questions via CSV or Excel file</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:question_list' %}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Back to MCQ List
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">Upload CSV/Excel File</h5>
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Upload Form -->
+<form method="post" enctype="multipart/form-data" id="bulkUploadForm">
+    {% csrf_token %}
+    
+    <div class="upload-card">
+        <!-- Step 1: Download Template -->
+        <div class="upload-section">
+            <h3 class="section-title">
+                <i class="fas fa-download"></i>
+                Step 1: Download Template
+            </h3>
+            
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h5 class="mb-2">Download the CSV template</h5>
+                    <p class="text-muted mb-3">Get the properly formatted template with sample data and column headers.</p>
+                    <a href="?action=download_template" class="btn-download-template">
+                        <i class="fas fa-file-csv"></i>
+                        Download Template
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Prepare File -->
+        <div class="upload-section">
+            <h3 class="section-title">
+                <i class="fas fa-edit"></i>
+                Step 2: Prepare Your MCQs
+            </h3>
+            
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h5 class="mb-2">Fill in your questions</h5>
+                    <p class="text-muted mb-3">Use the downloaded template to add your MCQs. Follow the format guide below for best results.</p>
+                    
+                    <!-- Format Guide (Collapsible) -->
+                    <div class="format-guide">
+                        <div class="format-guide-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Format Guide & Requirements
+                                <i class="fas fa-chevron-down ms-2" id="formatToggleIcon"></i>
+                            </h6>
+                        </div>
+                        
+                        <div class="format-guide-content" id="formatGuideContent" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Required Columns:</h6>
+                                    <div class="column-list">
+                                        <div class="column-item">
+                                            <span class="column-required">REQ</span>
+                                            <strong>Question Text</strong> - The full MCQ question
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-required">REQ</span>
+                                            <strong>Option A</strong> - First answer choice
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-required">REQ</span>
+                                            <strong>Option B</strong> - Second answer choice
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-required">REQ</span>
+                                            <strong>Correct Answer</strong> - A, B, C, D, E, or F
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-required">REQ</span>
+                                            <strong>Topic</strong> - Topic name (will be created if new)
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="text-secondary">Optional Columns:</h6>
+                                    <div class="column-list">
+                                        <div class="column-item">
+                                            <span class="column-optional">OPT</span>
+                                            <strong>Subject</strong> - Can use default below
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-optional">OPT</span>
+                                            <strong>Option C, D, E, F</strong> - Additional choices
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-optional">OPT</span>
+                                            <strong>Difficulty</strong> - Easy, Medium, Hard
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-optional">OPT</span>
+                                            <strong>Tags</strong> - Comma-separated
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-optional">OPT</span>
+                                            <strong>Explanation</strong> - Answer explanation
+                                        </div>
+                                        <div class="column-item">
+                                            <span class="column-optional">OPT</span>
+                                            <strong>Reference</strong> - Source citation
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-primary">Important Tips:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>At least 2 options (A, B) are required</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Correct Answer must match one of your option letters</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Subject and Topic will be created if they don't exist</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Tags should be separated by commas</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>File size limit: 10MB</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 3: Upload File -->
+        <div class="upload-section">
+            <h3 class="section-title">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Step 3: Upload Your File
+            </h3>
+            
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h5 class="mb-3">Select and upload your completed file</h5>
+                    
+                    <!-- File Upload Area -->
+                    <div class="file-upload-area">
+                        <div class="file-upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h5>Click to choose file or drag & drop</h5>
+                        <p class="text-muted mb-0">Supports CSV (.csv) and Excel (.xlsx, .xls) files</p>
+                        <input type="file" id="csvFile" name="csv_file" accept=".csv,.xlsx,.xls" style="display: none;">
+                    </div>
+                    
+                    <div id="selectedFile" class="mt-3" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-file me-2"></i>
+                            Selected: <span id="fileName"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Default Fields Section -->
+        <div class="upload-section">
+            <h3 class="section-title">
+                <i class="fas fa-cog"></i>
+                Optional: Default Values
+            </h3>
+            
+            <div class="default-fields-section">
+                <p class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>These values will be applied to questions that don't specify them in the file.</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.default_subject.id_for_label }}" class="form-label">Default Subject</label>
+                            {{ form.default_subject }}
+                            {% if form.default_subject.help_text %}
+                                <div class="form-text">{{ form.default_subject.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.default_difficulty.id_for_label }}" class="form-label">Default Difficulty</label>
+                            {{ form.default_difficulty }}
+                            {% if form.default_difficulty.help_text %}
+                                <div class="form-text">{{ form.default_difficulty.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Default Tags</label>
+                    <div class="tag-checkbox-list">
+                        {% for checkbox in form.default_tags %}
+                            <div class="tag-checkbox-item">
+                                {{ checkbox.tag }}
+                                <label for="{{ checkbox.id_for_label }}" class="form-check-label">
+                                    {{ checkbox.choice_label }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.default_tags.help_text %}
+                        <div class="form-text mt-2">{{ form.default_tags.help_text }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-check">
+                    {{ form.overwrite_existing }}
+                    <label for="{{ form.overwrite_existing.id_for_label }}" class="form-check-label">
+                        {{ form.overwrite_existing.label }}
+                        <i class="fas fa-exclamation-triangle text-warning ms-1"></i>
+                    </label>
+                    {% if form.overwrite_existing.help_text %}
+                        <div class="form-text">{{ form.overwrite_existing.help_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="d-flex gap-3 justify-content-start align-items-center">
+            <button type="submit" class="btn-upload" id="uploadBtn">
+                <i class="fas fa-upload"></i>
+                Upload MCQs
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+            </button>
+            
+            <a href="{% url 'staff:question_list' %}" class="btn-cancel">
+                <i class="fas fa-times me-2"></i>Cancel
+            </a>
+        </div>
+        
+        <!-- Upload Progress -->
+        <div class="upload-progress" id="uploadProgress">
+            <div class="d-flex justify-content-between mb-2">
+                <span>Processing file...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <p class="text-muted">Bulk upload interface coming soon...</p>
+</form>
+
+<!-- Error Rows Table (if any) -->
+{% if request.session.last_upload_errors %}
+    <div class="upload-card">
+        <h3 class="section-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            Rows with Errors
+        </h3>
+        
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle me-2"></i>
+            The following rows had errors and were not imported. You can download them for correction and re-upload.
+        </div>
+        
+        <div class="d-flex gap-2 mb-3">
+            <a href="?action=download_errors&session_key={{ request.session.last_upload_errors }}" class="btn btn-outline-primary">
+                <i class="fas fa-download me-2"></i>Download Error Rows
+            </a>
+        </div>
+        
+        <div class="error-table">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Row #</th>
+                            <th>Error</th>
+                            <th>Question Preview</th>
+                            <th>Subject</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Error rows would be displayed here via JavaScript or context -->
+                        <tr class="error-row">
+                            <td colspan="5" class="text-center text-muted py-3">
+                                Error details will be shown here after upload
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'staff/js/mcq_shared.js' %}"></script>
+<script src="{% static 'staff/js/bulk_upload.js' %}"></script>
 {% endblock %}

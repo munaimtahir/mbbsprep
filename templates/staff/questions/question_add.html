@@ -1,0 +1,343 @@
+{% extends 'staff/base_admin.html' %}
+{% load static %}
+
+{% block title %}Add MCQ - MedPrep Admin{% endblock %}
+{% block page_title %}Add New MCQ{% endblock %}
+
+{% block extra_css %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'staff/css/question_add.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="add-mcq-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'staff:question_list' %}" class="text-white-50">MCQs</a></li>
+                        <li class="breadcrumb-item active text-white">Add New MCQ</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-plus-circle me-3"></i>
+                    Add New MCQ
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">Create a new multiple choice question for the question bank</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:question_list' %}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Back to MCQ List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Form Errors -->
+{% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Main Form -->
+<form method="post" id="mcqForm" novalidate>
+    {% csrf_token %}
+    
+    <!-- Basic Information Section -->
+    <div class="form-card">
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Basic Information
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.subject.id_for_label }}" class="form-label required-field">{{ form.subject.label }}</label>
+                        {{ form.subject }}
+                        {% if form.subject.help_text %}
+                            <div class="help-text">{{ form.subject.help_text }}</div>
+                        {% endif %}
+                        {% if form.subject.errors %}
+                            <div class="text-danger">{{ form.subject.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.topic.id_for_label }}" class="form-label required-field">{{ form.topic.label }}</label>
+                        {{ form.topic }}
+                        {% if form.topic.help_text %}
+                            <div class="help-text">{{ form.topic.help_text }}</div>
+                        {% endif %}
+                        {% if form.topic.errors %}
+                            <div class="text-danger">{{ form.topic.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.difficulty.id_for_label }}" class="form-label required-field">{{ form.difficulty.label }}</label>
+                        {{ form.difficulty }}
+                        {% if form.difficulty.help_text %}
+                            <div class="help-text">{{ form.difficulty.help_text }}</div>
+                        {% endif %}
+                        {% if form.difficulty.errors %}
+                            <div class="text-danger">{{ form.difficulty.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.reference.id_for_label }}" class="form-label">{{ form.reference.label }}</label>
+                        {{ form.reference }}
+                        {% if form.reference.help_text %}
+                            <div class="help-text">{{ form.reference.help_text }}</div>
+                        {% endif %}
+                        {% if form.reference.errors %}
+                            <div class="text-danger">{{ form.reference.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <div class="form-check mt-4">
+                            {{ form.is_premium }}
+                            <label for="{{ form.is_premium.id_for_label }}" class="form-check-label">
+                                {{ form.is_premium.label }}
+                                <i class="fas fa-crown text-warning ms-1"></i>
+                            </label>
+                            {% if form.is_premium.help_text %}
+                                <div class="help-text">{{ form.is_premium.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                {{ form.is_active.label }}
+                                <i class="fas fa-check-circle text-success ms-1"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Question Text Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-question-circle"></i>
+                MCQ Question Text
+            </h3>
+            
+            <div class="mb-3">
+                <label for="{{ form.question_text.id_for_label }}" class="form-label required-field">{{ form.question_text.label }}</label>
+                {{ form.question_text }}
+                {% if form.question_text.help_text %}
+                    <div class="help-text">{{ form.question_text.help_text }}</div>
+                {% endif %}
+                {% if form.question_text.errors %}
+                    <div class="text-danger">{{ form.question_text.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Options Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-list"></i>
+                Answer Options
+                <span class="text-muted fs-6 ms-2">(Select one correct answer)</span>
+            </h3>
+            
+            <div class="option-section">
+                <!-- Option A -->
+                <div class="option-row" data-option-index="0">
+                    <div class="option-label">A</div>
+                    <div class="option-input">
+                        <input type="text" name="option_0_text" class="form-control form-control-lg option-input" 
+                               placeholder="Enter option A text..." required>
+                    </div>
+                    <div class="correct-radio">
+                        <input type="radio" name="correct_answer" value="0" 
+                               class="form-check-input" id="correct_0">
+                        <label for="correct_0" class="correct-indicator">
+                            <i class="fas fa-check-circle"></i> Correct
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Option B -->
+                <div class="option-row" data-option-index="1">
+                    <div class="option-label">B</div>
+                    <div class="option-input">
+                        <input type="text" name="option_1_text" class="form-control form-control-lg option-input" 
+                               placeholder="Enter option B text..." required>
+                    </div>
+                    <div class="correct-radio">
+                        <input type="radio" name="correct_answer" value="1" 
+                               class="form-check-input" id="correct_1">
+                        <label for="correct_1" class="correct-indicator">
+                            <i class="fas fa-check-circle"></i> Correct
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Option C -->
+                <div class="option-row" data-option-index="2">
+                    <div class="option-label">C</div>
+                    <div class="option-input">
+                        <input type="text" name="option_2_text" class="form-control form-control-lg option-input" 
+                               placeholder="Enter option C text..." required>
+                    </div>
+                    <div class="correct-radio">
+                        <input type="radio" name="correct_answer" value="2" 
+                               class="form-check-input" id="correct_2">
+                        <label for="correct_2" class="correct-indicator">
+                            <i class="fas fa-check-circle"></i> Correct
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Option D -->
+                <div class="option-row" data-option-index="3">
+                    <div class="option-label">D</div>
+                    <div class="option-input">
+                        <input type="text" name="option_3_text" class="form-control form-control-lg option-input" 
+                               placeholder="Enter option D text..." required>
+                    </div>
+                    <div class="correct-radio">
+                        <input type="radio" name="correct_answer" value="3" 
+                               class="form-check-input" id="correct_3">
+                        <label for="correct_3" class="correct-indicator">
+                            <i class="fas fa-check-circle"></i> Correct
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="button" class="add-option-btn" id="addOptionBtn">
+                    <i class="fas fa-plus me-2"></i>Add Another Option
+                </button>
+            </div>
+        </div>
+        
+        <!-- Explanation Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                Answer Explanation
+                <span class="text-muted fs-6 ms-2">(Optional but recommended)</span>
+            </h3>
+            
+            <div class="mb-3">
+                <label for="{{ form.explanation.id_for_label }}" class="form-label">{{ form.explanation.label }}</label>
+                {{ form.explanation }}
+                {% if form.explanation.help_text %}
+                    <div class="help-text">{{ form.explanation.help_text }}</div>
+                {% endif %}
+                {% if form.explanation.errors %}
+                    <div class="text-danger">{{ form.explanation.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Tags Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-tags"></i>
+                Tags & Categories
+                <span class="text-muted fs-6 ms-2">(Categorize your question)</span>
+            </h3>
+            
+            <!-- Existing Tags -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">{{ form.tags.label }}</label>
+                <div class="tag-section">
+                    {% for checkbox in form.tags %}
+                        <div class="tag-checkbox-item">
+                            {{ checkbox.tag }}
+                            <label for="{{ checkbox.id_for_label }}" class="form-check-label">
+                                {{ checkbox.choice_label }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if form.tags.help_text %}
+                    <div class="help-text mt-2">{{ form.tags.help_text }}</div>
+                {% endif %}
+                {% if form.tags.errors %}
+                    <div class="text-danger mt-2">{{ form.tags.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- New Tags Creation -->
+            <div class="mb-3">
+                <label for="{{ form.new_tags.id_for_label }}" class="form-label fw-bold">
+                    {{ form.new_tags.label }}
+                    <i class="fas fa-plus-circle text-success ms-1"></i>
+                </label>
+                {{ form.new_tags }}
+                {% if form.new_tags.help_text %}
+                    <div class="help-text mt-2">{{ form.new_tags.help_text }}</div>
+                {% endif %}
+                {% if form.new_tags.errors %}
+                    <div class="text-danger mt-2">{{ form.new_tags.errors.0 }}</div>
+                {% endif %}
+                <div class="tag-preview mt-2" id="tagPreview" style="display: none;">
+                    <small class="text-muted">Preview: </small>
+                    <div class="tag-preview-container" id="tagPreviewContainer"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn-add-mcq">
+                <i class="fas fa-save"></i>
+                Add MCQ
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+            </button>
+            
+            <a href="{% url 'staff:question_list' %}" class="btn-cancel">
+                <i class="fas fa-times me-2"></i>Cancel
+            </a>
+            
+            <button type="button" class="btn-reset">
+                <i class="fas fa-undo me-2"></i>Reset Form
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'staff/js/mcq_shared.js' %}"></script>
+<script>
+// Set URLs for AJAX calls
+window.staffUrls.getTopicsAjax = '{% url "staff:get_topics_ajax" %}';
+</script>
+<script src="{% static 'staff/js/question_add.js' %}"></script>
+{% endblock %}
