@@ -916,38 +916,68 @@ class BulkUserUploadView(StaffRequiredMixin, View):
 
 
 class UserExportView(StaffRequiredMixin, View):
-    """Export a single user's data to CSV"""
+    """Export user data to CSV"""
     
-    def get(self, request, pk):
+    def get(self, request, pk=None):
         """Export user data as CSV download"""
-        try:
-            user = User.objects.select_related('userprofile').get(pk=pk)
-        except User.DoesNotExist:
-            messages.error(request, 'User not found.')
-            return redirect('staff:user_list')
+        if pk:
+            # Export single user
+            try:
+                user = User.objects.select_related('userprofile').get(pk=pk)
+                users = [user]
+                filename_suffix = f"user_{user.username}"
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+                return redirect('staff:user_list')
+        else:
+            # Export all users
+            users = User.objects.select_related('userprofile').all()
+            filename_suffix = "all_users"
         
         # Create the CSV response
         response = HttpResponse(content_type='text/csv')
-        filename = f"user_{user.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        filename = f"{filename_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         writer = csv.writer(response)
         
-        # Write header
-        writer.writerow([
-            'Field', 'Value'
-        ])
-        
-        # Write user basic info
-        writer.writerow(['User ID', user.id])
-        writer.writerow(['Username', user.username])
-        writer.writerow(['Email', user.email])
-        writer.writerow(['First Name', user.first_name])
-        writer.writerow(['Last Name', user.last_name])
-        writer.writerow(['Is Active', user.is_active])
-        writer.writerow(['Is Staff', user.is_staff])
-        writer.writerow(['Is Superuser', user.is_superuser])
-        writer.writerow(['Date Joined', user.date_joined.strftime('%Y-%m-%d %H:%M:%S')])
+        if pk:
+            # Single user export - detailed format
+            user = users[0]
+            # Write header
+            writer.writerow([
+                'Field', 'Value'
+            ])
+            
+            # Write user basic info
+            writer.writerow(['User ID', user.id])
+            writer.writerow(['Username', user.username])
+            writer.writerow(['Email', user.email])
+            writer.writerow(['First Name', user.first_name])
+            writer.writerow(['Last Name', user.last_name])
+            writer.writerow(['Is Active', user.is_active])
+            writer.writerow(['Is Staff', user.is_staff])
+            writer.writerow(['Is Superuser', user.is_superuser])
+            writer.writerow(['Date Joined', user.date_joined.strftime('%Y-%m-%d %H:%M:%S')])
+        else:
+            # Multiple users export - table format
+            writer.writerow([
+                'ID', 'Username', 'Email', 'First Name', 'Last Name', 
+                'Is Active', 'Is Staff', 'Is Superuser', 'Date Joined'
+            ])
+            
+            for user in users:
+                writer.writerow([
+                    user.id,
+                    user.username,
+                    user.email,
+                    user.first_name,
+                    user.last_name,
+                    user.is_active,
+                    user.is_staff,
+                    user.is_superuser,
+                    user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
+                ])
         writer.writerow(['Last Login', user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'])
         
         # Write profile info if exists

@@ -1,25 +1,888 @@
 {% extends 'staff/base_admin.html' %}
+{% load static %}
 
-{% block title %}Add Tag - MedPrep Admin{% endblock %}
+{% block title %}{% if tag %}Edit{% else %}Add{% endif %} Tag - MedPrep Admin{% endblock %}
+{% block page_title %}{% if tag %}Edit{% else %}Add{% endif %} Tag{% endblock %}
+
+{% block extra_css %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'staff/css/tags.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css">
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-        <i class="fas fa-plus me-2"></i>Add Tag
-    </h1>
-    <div>
-        <a href="{% url 'staff:tag_list' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i>Back to Tags
-        </a>
+<!-- Page Header -->
+<div class="tags-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'staff:tag_list' %}" class="text-white-50">Tags Management</a></li>
+                        <li class="breadcrumb-item active text-white">{% if tag %}Edit{% else %}Add{% endif %} Tag</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-{% if tag %}edit{% else %}plus{% endif %} me-3"></i>
+                    {% if tag %}Edit{% else %}Add{% endif %} Tag
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">{% if tag %}Update existing tag properties and subtags{% else %}Create a new tag for content organization{% endif %}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{% url 'staff:tag_list' %}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Tags
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">Tag Form</h5>
-    </div>
-    <div class="card-body">
-        <p class="text-muted">Tag form coming soon...</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Tag Form Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tag me-2"></i>Tag Details
+                    </h5>
+                    {% if tag %}
+                    <span class="status-badge ms-3 {% if tag.is_active %}status-active{% else %}status-archived{% endif %}">
+                        <i class="fas fa-circle"></i>
+                        {% if tag.is_active %}Active{% else %}Archived{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <form method="post" id="tagForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="tagId" name="tagId" value="{{ tag.id|default:'' }}">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <label for="id_name" class="form-label">Tag Name <span class="text-danger">*</span></label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="text-danger small mt-1">{{ form.name.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Choose a clear, descriptive name (60 chars max)</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_color" class="form-label">Color</label>
+                                <div class="color-picker-container">
+                                    <div class="color-preview" id="colorPreview" style="background-color: {{ form.color.value|default:'#0057A3' }};"></div>
+                                    {{ form.color }}
+                                </div>
+                                {% if form.color.errors %}
+                                <div class="text-danger small mt-1">{{ form.color.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Used for visual identification</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_description" class="form-label">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Brief description of what this tag represents (optional)</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label d-block">Resource Types</label>
+                            <div class="form-text mb-2">Select which resource types this tag can be applied to:</div>
+                            <div class="resource-type-container">
+                                <div class="resource-type-checkbox {% if 'mcq' in tag.resources %}active{% endif %}">
+                                    <input type="checkbox" id="resourceTypeMcq" name="resources" value="mcq" class="form-check-input" {% if 'mcq' in tag.resources %}checked{% endif %}>
+                                    <label for="resourceTypeMcq">MCQs</label>
+                                </div>
+                                <div class="resource-type-checkbox {% if 'video' in tag.resources %}active{% endif %}">
+                                    <input type="checkbox" id="resourceTypeVideo" name="resources" value="video" class="form-check-input" {% if 'video' in tag.resources %}checked{% endif %}>
+                                    <label for="resourceTypeVideo">Videos</label>
+                                </div>
+                                <div class="resource-type-checkbox {% if 'note' in tag.resources %}active{% endif %}">
+                                    <input type="checkbox" id="resourceTypeNote" name="resources" value="note" class="form-check-input" {% if 'note' in tag.resources %}checked{% endif %}>
+                                    <label for="resourceTypeNote">Notes</label>
+                                </div>
+                                <div class="resource-type-checkbox {% if 'all' in tag.resources %}active{% endif %}">
+                                    <input type="checkbox" id="resourceTypeAll" name="resources" value="all" class="form-check-input" {% if 'all' in tag.resources %}checked{% endif %}>
+                                    <label for="resourceTypeAll">All Resources</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if tag %}
+                        <div class="form-check mb-4">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="id_is_active">
+                                Active
+                            </label>
+                            <div class="form-text">Uncheck to archive this tag</div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>{% if tag %}Update{% else %}Save{% endif %} Tag
+                                </button>
+                                <a href="{% url 'staff:tag_list' %}" class="btn btn-outline-secondary ms-2">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                            {% if tag %}
+                            <button type="button" class="btn btn-warning" id="archiveTagBtn">
+                                <i class="fas fa-archive me-2"></i>{% if tag.is_active %}Archive{% else %}Restore{% endif %} Tag
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if tag %}
+            <!-- Subtags Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tags me-2"></i>Subtags
+                    </h5>
+                    <button class="btn btn-sm btn-primary" id="addSubtagBtn">
+                        <i class="fas fa-plus me-2"></i>Add Subtag
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Add Subtag Form (initially hidden) -->
+                    <div id="addSubtagForm" class="add-subtag-form mb-3" style="display: none;">
+                        <div class="card border-primary bg-light">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3">Add New Subtag</h6>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="newSubtagName" class="form-label">Subtag Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="newSubtagName" placeholder="Enter subtag name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Resource Types</label>
+                                        <div class="d-flex flex-wrap">
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="checkbox" id="subtagResourceMcq" value="mcq">
+                                                <label class="form-check-label" for="subtagResourceMcq">MCQs</label>
+                                            </div>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="checkbox" id="subtagResourceVideo" value="video">
+                                                <label class="form-check-label" for="subtagResourceVideo">Videos</label>
+                                            </div>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="checkbox" id="subtagResourceNotes" value="note">
+                                                <label class="form-check-label" for="subtagResourceNotes">Notes</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-secondary me-2" id="cancelSubtagBtn">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="saveSubtagBtn">
+                                        <i class="fas fa-save me-1"></i>Save Subtag
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subtags-table-container">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th width="50">#</th>
+                                    <th>Subtag Name</th>
+                                    <th width="180">Resource Types</th>
+                                    <th width="120">Status</th>
+                                    <th width="180">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subtagsTableBody">
+                                {% if tag.subtags.all %}
+                                    {% for subtag in tag.subtags.all %}
+                                    <tr class="subtag-row" data-subtag-id="{{ subtag.id }}" data-status="{% if subtag.is_active %}active{% else %}archived{% endif %}">
+                                        <td>{{ forloop.counter }}</td>
+                                        <td class="subtag-info">
+                                            <div class="subtag-name">{{ subtag.name }}</div>
+                                        </td>
+                                        <td class="subtag-resources">
+                                            {% if subtag.tag.apply_to_all_resources %}
+                                                <span class="resource-badge mcq">MCQs</span>
+                                                <span class="resource-badge video">Videos</span>
+                                                <span class="resource-badge note">Notes</span>
+                                            {% else %}
+                                                {% if subtag.tag.apply_to_mcq %}<span class="resource-badge mcq">MCQs</span>{% endif %}
+                                                {% if subtag.tag.apply_to_videos %}<span class="resource-badge video">Videos</span>{% endif %}
+                                                {% if subtag.tag.apply_to_notes %}<span class="resource-badge note">Notes</span>{% endif %}
+                                                {% if not subtag.tag.apply_to_mcq and not subtag.tag.apply_to_videos and not subtag.tag.apply_to_notes %}
+                                                <span class="text-muted small">None</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="subtag-status">
+                                            <span class="status-badge {% if subtag.is_active %}status-active{% else %}status-archived{% endif %}">
+                                                <i class="fas fa-circle"></i>
+                                                {% if subtag.is_active %}Active{% else %}Archived{% endif %}
+                                            </span>
+                                        </td>
+                                        <td class="subtag-actions">
+                                            <button type="button" class="btn-action btn-edit btn-edit-subtag" data-subtag-id="{{ subtag.id }}" data-subtag-name="{{ subtag.name }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            {% if subtag.is_active %}
+                                            <button type="button" class="btn-action btn-archive btn-archive-subtag" data-subtag-id="{{ subtag.id }}" data-subtag-name="{{ subtag.name }}">
+                                                <i class="fas fa-archive"></i> Archive
+                                            </button>
+                                            {% else %}
+                                            <button type="button" class="btn-action btn-restore btn-restore-subtag" data-subtag-id="{{ subtag.id }}" data-subtag-name="{{ subtag.name }}">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">
+                                                <i class="fas fa-tags"></i>
+                                            </div>
+                                            <h5>No subtags yet</h5>
+                                            <p class="text-muted">Click "Add Subtag" to create your first subtag</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Tips Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Tips & Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>About Tags</h6>
+                        <p>Tags help organize content by theme, making it easier for users to find related materials across subjects.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Best Practices</h6>
+                        <ul class="ps-4">
+                            <li>Use clear, specific names for tags</li>
+                            <li>Choose distinctive colors for visual recognition</li>
+                            <li>Use subtags for more granular organization</li>
+                            <li>Specify which resource types can use this tag</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h6>Archiving vs. Deletion</h6>
+                        <p>Archived tags remain in the database but aren't available for selection. This preserves historical data while keeping the interface clean.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Tips Card -->
+            <div class="tips-card mb-4">
+                <h5><i class="fas fa-lightbulb me-2"></i>Tips for Effective Tags</h5>
+                <ul>
+                    <li>Use concise, descriptive names</li>
+                    <li>Choose distinct colors to help with visual recognition</li>
+                    <li>Add relevant subtags to organize related content</li>
+                    <li>Be consistent with naming conventions</li>
+                    <li>Use tags to help students find relevant content</li>
+                    <li>Archive unused tags instead of deleting them</li>
+                </ul>
+            </div>
+            
+            <!-- Resource Types Guide -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Resource Types</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">Tags can be assigned to one or more resource types:</p>
+                    <ul class="small">
+                        <li><strong>MCQs</strong> - Multiple choice questions in the question bank</li>
+                        <li><strong>Videos</strong> - Tutorial and lecture video content</li>
+                        <li><strong>Notes</strong> - Study notes and reference materials</li>
+                        <li><strong>All Resources</strong> - Apply to all resource types (overrides individual selections)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subtag Modal -->
+<div class="modal fade" id="subtagModal" tabindex="-1" aria-labelledby="subtagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="subtagModalLabel">Add New Subtag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subtagForm">
+                    <input type="hidden" id="subtag_parent" name="parent" value="{{ tag.id|default:'' }}">
+                    
+                    <div class="mb-3">
+                        <label for="subtag_name" class="form-label">Subtag Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="subtag_name" name="name" required>
+                        <div class="form-text">Choose a clear, descriptive name for this subtag</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label d-block">Resource Types</label>
+                        <div class="form-text mb-2">Select which resource types this subtag can be applied to:</div>
+                        <div class="resource-type-container">
+                            <div class="resource-type-checkbox">
+                                <input type="checkbox" id="subtag_resourceTypeMcq" name="resources" value="mcq" class="form-check-input">
+                                <label for="subtag_resourceTypeMcq">MCQs</label>
+                            </div>
+                            <div class="resource-type-checkbox">
+                                <input type="checkbox" id="subtag_resourceTypeVideo" name="resources" value="video" class="form-check-input">
+                                <label for="subtag_resourceTypeVideo">Videos</label>
+                            </div>
+                            <div class="resource-type-checkbox">
+                                <input type="checkbox" id="subtag_resourceTypeNote" name="resources" value="note" class="form-check-input">
+                                <label for="subtag_resourceTypeNote">Notes</label>
+                            </div>
+                            <div class="resource-type-checkbox">
+                                <input type="checkbox" id="subtag_resourceTypeAll" name="resources" value="all" class="form-check-input">
+                                <label for="subtag_resourceTypeAll">All Resources</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3" id="subtag_status_container" style="display: none;">
+                        <input type="checkbox" class="form-check-input" id="subtag_is_active" name="is_active" checked>
+                        <label class="form-check-label" for="subtag_is_active">
+                            Active
+                        </label>
+                        <div class="form-text">Uncheck to archive this subtag</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveSubtagBtn">
+                    <i class="fas fa-save me-2"></i>Save Subtag
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalTitle">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+            
+            {% if tag %}
+            <!-- Subtags Card (only for edit) -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Subtags</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addSubtagBtn">
+                        <i class="fas fa-plus me-1"></i>Add
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="addSubtagForm" class="add-subtag-form mb-3" style="display: none;">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control form-control-sm" id="newSubtagName" placeholder="Enter subtag name">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-sm btn-primary me-1" id="saveSubtagBtn">
+                                    <i class="fas fa-save me-1"></i>Save
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="cancelSubtagBtn">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subtags-table-container">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th width="40">#</th>
+                                    <th>Name</th>
+                                    <th width="100">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subtagsTableBody">
+                                {% if tag.subtags.exists %}
+                                    {% for subtag in tag.subtags.all %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <span class="subtag-name" data-subtag-id="{{ subtag.id }}">{{ subtag.name }}</span>
+                                            <input type="text" class="form-control form-control-sm subtag-edit-input" 
+                                                value="{{ subtag.name }}" style="display: none;">
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary subtag-edit-btn" 
+                                                    data-subtag-id="{{ subtag.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success subtag-save-btn" 
+                                                    data-subtag-id="{{ subtag.id }}" style="display: none;">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary subtag-cancel-btn" 
+                                                    data-subtag-id="{{ subtag.id }}" style="display: none;">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            {% if subtag.is_active %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger subtag-archive-btn" 
+                                                    data-subtag-id="{{ subtag.id }}">
+                                                <i class="fas fa-archive"></i>
+                                            </button>
+                                            {% else %}
+                                            <button type="button" class="btn btn-sm btn-outline-success subtag-restore-btn" 
+                                                    data-subtag-id="{{ subtag.id }}">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">
+                                            <i class="fas fa-tag me-2"></i>No subtags yet
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+<script src="{% static 'staff/js/tags_shared.js' %}"></script>
+<script>
+    // Set current tag ID for JS
+    const currentTagId = {{ tag.id|default:0 }};
+    
+    // Staff URLs for AJAX
+    window.staffUrls = {
+        tagCreate: "{% url 'staff:tag_add' %}",
+        tagEdit: "{% url 'staff:tag_edit' 0 %}",
+        tagToggleStatus: "{% url 'staff:tag_toggle_status' %}",
+        tagBulkAction: "{% url 'staff:tag_bulk_action' %}",
+        getTagSubtags: "{% url 'staff:get_tag_subtags' 0 %}",
+        subtagCreate: "{% url 'staff:subtag_create' %}",
+        subtagEdit: "{% url 'staff:subtag_edit' 0 %}",
+        subtagToggleStatus: "{% url 'staff:subtag_toggle_status' %}"
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize color picker
+        const colorPickerInput = document.getElementById('id_color');
+        const colorPreview = document.getElementById('colorPreview');
+        
+        if (colorPickerInput && colorPreview) {
+            const pickr = new Pickr({
+                el: '#colorPreview',
+                theme: 'classic',
+                default: colorPickerInput.value || '#0057A3',
+                components: {
+                    preview: true,
+                    opacity: true,
+                    hue: true,
+                    interaction: {
+                        hex: true,
+                        rgba: true,
+                        hsla: false,
+                        hsva: false,
+                        cmyk: false,
+                        input: true,
+                        clear: false,
+                        save: true
+                    }
+                }
+            }).on('save', (color) => {
+                const hexColor = color.toHEXA().toString();
+                colorPickerInput.value = hexColor;
+                colorPreview.style.backgroundColor = hexColor;
+                pickr.hide();
+            });
+        }
+        
+        // Initialize resource type checkboxes
+        const resourceCheckboxes = document.querySelectorAll('.resource-type-checkbox');
+        resourceCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                // Toggle active class
+                this.classList.toggle('active');
+                
+                // Update hidden input value
+                const input = this.querySelector('input[type="checkbox"]');
+                input.checked = !input.checked;
+                
+                // If "All Resources" is checked, disable other checkboxes
+                if (input.id === 'resourceTypeAll' || input.id === 'subtag_resourceTypeAll') {
+                    const parentContainer = this.closest('.resource-type-container');
+                    const otherCheckboxes = parentContainer.querySelectorAll('input[type="checkbox"]:not([id="resourceTypeAll"]):not([id="subtag_resourceTypeAll"])');
+                    
+                    otherCheckboxes.forEach(cb => {
+                        if (input.checked) {
+                            cb.disabled = true;
+                            cb.parentElement.classList.add('disabled');
+                        } else {
+                            cb.disabled = false;
+                            cb.parentElement.classList.remove('disabled');
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Initialize modals
+        let subtagModal = null;
+        let confirmModal = null;
+        let currentSubtagId = null;
+        
+        const subtagModalEl = document.getElementById('subtagModal');
+        if (subtagModalEl) {
+            subtagModal = new bootstrap.Modal(subtagModalEl);
+        }
+        
+        const confirmModalEl = document.getElementById('confirmModal');
+        if (confirmModalEl) {
+            confirmModal = new bootstrap.Modal(confirmModalEl);
+        }
+        
+        // Add subtag button
+        const addSubtagBtn = document.getElementById('addSubtagBtn');
+        if (addSubtagBtn) {
+            addSubtagBtn.addEventListener('click', function() {
+                // Reset form
+                document.getElementById('subtagForm').reset();
+                
+                // Update modal title
+                document.getElementById('subtagModalLabel').textContent = 'Add New Subtag';
+                
+                // Hide status field for new subtags
+                document.getElementById('subtag_status_container').style.display = 'none';
+                
+                // Clear current subtag ID
+                currentSubtagId = null;
+                
+                // Set parent tag ID
+                document.getElementById('subtag_parent').value = '{{ tag.id }}';
+                
+                // Show modal
+                subtagModal.show();
+            });
+        }
+        
+        // Edit subtag buttons
+        document.querySelectorAll('.btn-edit-subtag').forEach(button => {
+            button.addEventListener('click', function() {
+                const subtagId = this.dataset.subtagId;
+                if (!subtagId) return;
+                
+                // Show loading state
+                this.disabled = true;
+                this.classList.add('loading');
+                
+                // Fetch subtag data
+                fetch(`/staff/subtags/${subtagId}/`, {
+                    headers: {
+                        'X-CSRFToken': TagsUtils.getCSRFToken()
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Populate form
+                    document.getElementById('subtag_name').value = data.name || '';
+                    document.getElementById('subtag_parent').value = data.parent || '';
+                    
+                    // Set resource checkboxes
+                    document.getElementById('subtag_resourceTypeMcq').checked = data.resources.includes('mcq');
+                    document.getElementById('subtag_resourceTypeVideo').checked = data.resources.includes('video');
+                    document.getElementById('subtag_resourceTypeNote').checked = data.resources.includes('note');
+                    document.getElementById('subtag_resourceTypeAll').checked = data.resources.includes('all');
+                    
+                    // Update resource checkbox active states
+                    document.querySelectorAll('.resource-type-checkbox').forEach(cb => {
+                        const input = cb.querySelector('input[type="checkbox"]');
+                        if (input.checked) {
+                            cb.classList.add('active');
+                        } else {
+                            cb.classList.remove('active');
+                        }
+                    });
+                    
+                    // Set status field
+                    document.getElementById('subtag_is_active').checked = data.is_active;
+                    document.getElementById('subtag_status_container').style.display = 'block';
+                    
+                    // Update modal title
+                    document.getElementById('subtagModalLabel').textContent = 'Edit Subtag';
+                    
+                    // Set current subtag ID
+                    currentSubtagId = subtagId;
+                    
+                    // Show modal
+                    subtagModal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    TagsUtils.showToast('Failed to load subtag data. Please try again.', 'danger');
+                })
+                .finally(() => {
+                    // Reset loading state
+                    this.disabled = false;
+                    this.classList.remove('loading');
+                });
+            });
+        });
+        
+        // Save subtag button
+        const saveSubtagBtn = document.getElementById('saveSubtagBtn');
+        if (saveSubtagBtn) {
+            saveSubtagBtn.addEventListener('click', function() {
+                const form = document.getElementById('subtagForm');
+                const formData = new FormData(form);
+                const url = currentSubtagId ? `/staff/subtags/${currentSubtagId}/update/` : '/staff/subtags/create/';
+                const method = currentSubtagId ? 'PUT' : 'POST';
+                
+                // Show loading state
+                this.disabled = true;
+                this.classList.add('loading');
+                
+                // Send AJAX request
+                fetch(url, {
+                    method: method,
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': TagsUtils.getCSRFToken()
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide modal
+                    subtagModal.hide();
+                    
+                    // Show success message
+                    TagsUtils.showToast(data.message || 'Subtag saved successfully');
+                    
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    TagsUtils.showToast('Failed to save subtag. Please try again.', 'danger');
+                })
+                .finally(() => {
+                    // Reset loading state
+                    this.disabled = false;
+                    this.classList.remove('loading');
+                });
+            });
+        }
+        
+        // Archive subtag buttons
+        document.querySelectorAll('.btn-archive-subtag').forEach(button => {
+            button.addEventListener('click', function() {
+                const subtagId = this.dataset.subtagId;
+                const subtagName = this.dataset.subtagName;
+                if (!subtagId) return;
+                
+                // Set confirmation modal content
+                document.getElementById('confirmModalTitle').textContent = 'Archive Subtag';
+                document.getElementById('confirmModalBody').textContent = `Are you sure you want to archive the subtag "${subtagName}"? This will hide it from future tagging options but preserve all existing associations.`;
+                
+                // Set confirm button properties
+                const confirmBtn = document.getElementById('confirmActionBtn');
+                confirmBtn.textContent = 'Archive';
+                confirmBtn.className = 'btn btn-danger';
+                confirmBtn.dataset.action = 'archiveSubtag';
+                confirmBtn.dataset.id = subtagId;
+                
+                // Show confirmation modal
+                confirmModal.show();
+            });
+        });
+        
+        // Restore subtag buttons
+        document.querySelectorAll('.btn-restore-subtag').forEach(button => {
+            button.addEventListener('click', function() {
+                const subtagId = this.dataset.subtagId;
+                const subtagName = this.dataset.subtagName;
+                if (!subtagId) return;
+                
+                // Set confirmation modal content
+                document.getElementById('confirmModalTitle').textContent = 'Restore Subtag';
+                document.getElementById('confirmModalBody').textContent = `Are you sure you want to restore the subtag "${subtagName}"? This will make it available for future tagging.`;
+                
+                // Set confirm button properties
+                const confirmBtn = document.getElementById('confirmActionBtn');
+                confirmBtn.textContent = 'Restore';
+                confirmBtn.className = 'btn btn-success';
+                confirmBtn.dataset.action = 'restoreSubtag';
+                confirmBtn.dataset.id = subtagId;
+                
+                // Show confirmation modal
+                confirmModal.show();
+            });
+        });
+        
+        // Confirm action button
+        const confirmActionBtn = document.getElementById('confirmActionBtn');
+        if (confirmActionBtn) {
+            confirmActionBtn.addEventListener('click', function() {
+                const action = this.dataset.action;
+                const id = this.dataset.id;
+                
+                if (!action || !id) {
+                    return;
+                }
+                
+                // Show loading state
+                this.disabled = true;
+                this.classList.add('loading');
+                
+                let url, method;
+                
+                switch (action) {
+                    case 'archiveSubtag':
+                        url = `/staff/subtags/${id}/archive/`;
+                        method = 'POST';
+                        break;
+                    case 'restoreSubtag':
+                        url = `/staff/subtags/${id}/restore/`;
+                        method = 'POST';
+                        break;
+                    default:
+                        console.error('Unknown action:', action);
+                        return;
+                }
+                
+                // Send AJAX request
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'X-CSRFToken': TagsUtils.getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide modal
+                    confirmModal.hide();
+                    
+                    // Show success message
+                    TagsUtils.showToast(data.message || 'Action completed successfully');
+                    
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    TagsUtils.showToast('Failed to complete action. Please try again.', 'danger');
+                })
+                .finally(() => {
+                    // Reset loading state
+                    this.disabled = false;
+                    this.classList.remove('loading');
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}

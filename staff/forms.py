@@ -1,9 +1,12 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
-from core.models import Question, Option, Subject, Topic, Tag, Note, VideoResource, Flashcard, PaymentProof, UserProfile
+from django.core.exceptions import ValidationError
+from core.models import Question, Option, Subject, Topic, Tag, Subtag, Note, VideoResource, Flashcard, PaymentProof, UserProfile
 from django.forms import inlineformset_factory
 import os
+import csv
+import io
 
 
 class StaffLoginForm(AuthenticationForm):
@@ -33,16 +36,20 @@ class StaffLoginForm(AuthenticationForm):
 class TagForm(forms.ModelForm):
     """Form for creating and editing tags"""
     
+    # Resource type application fields
+    apply_to_all_resources = forms.BooleanField(required=False, initial=True)
+    apply_to_mcq = forms.BooleanField(required=False, initial=False)
+    apply_to_videos = forms.BooleanField(required=False, initial=False)
+    apply_to_notes = forms.BooleanField(required=False, initial=False)
+    
     class Meta:
         model = Tag
-        fields = ['name', 'parent', 'description', 'color', 'is_active']
+        fields = ['name', 'description', 'color', 'is_active', 
+                  'apply_to_all_resources', 'apply_to_mcq', 'apply_to_videos', 'apply_to_notes']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Tag name'
-            }),
-            'parent': forms.Select(attrs={
-                'class': 'form-control'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -58,13 +65,37 @@ class TagForm(forms.ModelForm):
             })
         }
 
+
+class SubtagForm(forms.ModelForm):
+    """Form for creating and editing subtags"""
+    
+    class Meta:
+        model = Subtag
+        fields = ['name', 'tag', 'description', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Subtag name'
+            }),
+            'tag': forms.Select(attrs={
+                'class': 'form-control',
+                'required': True
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Optional description'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only show active tags as parent options
-        self.fields['parent'].queryset = Tag.objects.filter(is_active=True)
-        # Exclude current tag from parent options to prevent self-reference
-        if self.instance.pk:
-            self.fields['parent'].queryset = self.fields['parent'].queryset.exclude(pk=self.instance.pk)
+        self.fields['tag'].queryset = Tag.objects.filter(is_active=True)
+        self.fields['tag'].required = True
 
 
 class QuestionForm(forms.ModelForm):
@@ -1183,3 +1214,72 @@ class UserEditForm(forms.ModelForm):
             profile.save()
         
         return user
+
+
+# Bulk Upload Forms
+class TopicBulkUploadForm(forms.Form):
+    """Form for bulk uploading topics from CSV"""
+    
+    csv_file = forms.FileField(
+        label="CSV File",
+        help_text="Upload a CSV file with columns: LOs, Sub-Topic, Topic, Subject, Type, Module, Assessment",
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.csv'
+        })
+    )
+    
+    create_subjects = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Create new subjects if they don't exist",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
+    create_tags = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Create tags from Topic, Sub-Topic, Type, Module, Assessment columns",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
+    def clean_csv_file(self):
+        file = self.cleaned_data.get('csv_file')
+        
+        if not file:
+            raise ValidationError("Please upload a CSV file.")
+        
+        if not file.name.endswith('.csv'):
+            raise ValidationError("File must be a CSV file.")
+        
+        # Read and validate CSV structure
+        try:
+            file.seek(0)
+            content = file.read().decode('utf-8-sig')  # Handle BOM
+            csv_reader = csv.DictReader(io.StringIO(content))
+            
+            required_columns = ['LOs', 'Sub-Topic', 'Topic', 'Subject', 'Type', 'Module', 'Assessment']
+            
+            # Check if all required columns exist
+            fieldnames = csv_reader.fieldnames
+            missing_columns = [col for col in required_columns if col not in fieldnames]
+            
+            if missing_columns:
+                raise ValidationError(f"Missing required columns: {', '.join(missing_columns)}")
+            
+            # Validate that there's at least one row of data
+            rows = list(csv_reader)
+            if not rows:
+                raise ValidationError("CSV file appears to be empty or contains only headers.")
+            
+            # Reset file pointer for later processing
+            file.seek(0)
+            
+        except UnicodeDecodeError:
+            raise ValidationError("File encoding error. Please ensure the CSV file is saved with UTF-8 encoding.")
+        except csv.Error as e:
+            raise ValidationError(f"CSV parsing error: {str(e)}")
+        except Exception as e:
+            raise ValidationError(f"Error reading CSV file: {str(e)}")
+        
+        return file

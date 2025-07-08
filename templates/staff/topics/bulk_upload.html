@@ -1,0 +1,243 @@
+{% extends 'staff/base_admin.html' %}
+{% load static %}
+
+{% block title %}Bulk Upload Topics - MedPrep Admin{% endblock %}
+{% block page_title %}Bulk Upload Topics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'staff/css/topics.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="topics-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'staff:topic_list' %}" class="text-white-50">Topics</a></li>
+                        <li class="breadcrumb-item active text-white">Bulk Upload</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-upload me-3"></i>
+                    Bulk Upload Topics
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">Upload multiple topics from CSV file with automatic tagging</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'staff:topic_template_download' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-download me-2"></i>Download Template
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Form -->
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-csv me-2"></i>
+                        Upload CSV File
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Instructions:</h6>
+                        <ul class="mb-0">
+                            <li>Download the CSV template to see the required format</li>
+                            <li><strong>LOs</strong>: Learning objectives (topic descriptions)</li>
+                            <li><strong>Sub-Topic</strong>: Subtopic classification</li>
+                            <li><strong>Topic</strong>: Main topic name</li>
+                            <li><strong>Subject</strong>: Subject name (e.g., Biochemistry, Physiology)</li>
+                            <li><strong>Type</strong>: Subject type (e.g., Major Subject, Minor Subject)</li>
+                            <li><strong>Module</strong>: Module classification (e.g., Foundation-1 Module)</li>
+                            <li><strong>Assessment</strong>: Assessment type (e.g., MCQS, OSPE)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Upload Form -->
+                    <form method="post" enctype="multipart/form-data" id="bulkUploadForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.csv_file.id_for_label }}" class="form-label">
+                                {{ form.csv_file.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.csv_file }}
+                            {% if form.csv_file.help_text %}
+                                <div class="form-text">{{ form.csv_file.help_text }}</div>
+                            {% endif %}
+                            {% if form.csv_file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.csv_file.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.create_subjects }}
+                                    <label class="form-check-label" for="{{ form.create_subjects.id_for_label }}">
+                                        {{ form.create_subjects.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.create_tags }}
+                                    <label class="form-check-label" for="{{ form.create_tags.id_for_label }}">
+                                        {{ form.create_tags.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff:topic_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="uploadBtn">
+                                <i class="fas fa-upload me-2"></i>Upload Topics
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- File Preview Section -->
+            <div class="card mt-4" id="previewCard" style="display: none;">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-eye me-2"></i>
+                        File Preview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="previewContent">
+                        <!-- Preview will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('{{ form.csv_file.id_for_label }}');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const previewCard = document.getElementById('previewCard');
+    const previewContent = document.getElementById('previewContent');
+    
+    // File selection handler
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.name.endsWith('.csv')) {
+            previewCSVFile(file);
+        } else {
+            previewCard.style.display = 'none';
+        }
+    });
+    
+    // CSV file preview
+    function previewCSVFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const csvContent = e.target.result;
+                const lines = csvContent.split('\n').slice(0, 6); // Show first 5 rows + header
+                
+                let html = '<div class="table-responsive">';
+                html += '<table class="table table-bordered table-sm">';
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        const cells = parseCSVLine(line);
+                        html += '<tr>';
+                        if (index === 0) {
+                            cells.forEach(cell => {
+                                html += `<th class="bg-primary text-white">${escapeHtml(cell)}</th>`;
+                            });
+                        } else {
+                            cells.forEach(cell => {
+                                html += `<td>${escapeHtml(cell.substring(0, 50))}</td>`;
+                            });
+                        }
+                        html += '</tr>';
+                    }
+                });
+                
+                html += '</table>';
+                html += '</div>';
+                html += '<p class="text-muted mt-2">Preview showing first 5 rows. Total file size: ' + formatFileSize(file.size) + '</p>';
+                
+                previewContent.innerHTML = html;
+                previewCard.style.display = 'block';
+                
+            } catch (error) {
+                previewContent.innerHTML = '<div class="alert alert-warning">Could not preview file. Please ensure it\'s a valid CSV file.</div>';
+                previewCard.style.display = 'block';
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    // Simple CSV line parser (handles basic cases)
+    function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result;
+    }
+    
+    // Escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Form submission handler
+    document.getElementById('bulkUploadForm').addEventListener('submit', function(e) {
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        uploadBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

@@ -425,7 +425,7 @@
 <script src="{% static 'staff/js/mcq_shared.js' %}"></script>
 <script>
 // Set URLs for AJAX calls
-window.staffUrls.getTopicsAjax = '{% url "staff:get_topics_ajax" %}';
+window.staffUrls.getTopicsAjax = '{% url "staff:get_topics_ajax" subject_id=0 %}'.replace('0', '{subject_id}');
 
 // Set initial values from template
 window.mcqEditData = {

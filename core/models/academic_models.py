@@ -45,6 +45,9 @@ class Topic(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Many-to-many relationship with tags
+    tags = models.ManyToManyField('Tag', blank=True, related_name='topics')
+    
     class Meta:
         verbose_name = 'Topic'
         verbose_name_plural = 'Topics'

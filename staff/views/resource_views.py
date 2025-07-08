@@ -1,6 +1,6 @@
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
-from core.models import Note, VideoResource, Flashcard
+from core.models.resource_models import Note, VideoResource, Flashcard
 from ..forms import NoteForm, VideoResourceForm, FlashcardForm
 from .user_views import StaffRequiredMixin
 
@@ -13,12 +13,24 @@ class ResourceListView(StaffRequiredMixin, ListView):
         return None  # Will be implemented with combined resources
 
 
+class NoteListView(StaffRequiredMixin, ListView):
+    """List all notes"""
+    model = Note
+    template_name = 'staff/resources/note_list.html'
+    context_object_name = 'notes'
+    paginate_by = 20
+
+
 class NoteCreateView(StaffRequiredMixin, CreateView):
     """Create new note"""
     model = Note
     form_class = NoteForm
     template_name = 'staff/resources/note_form.html'
-    success_url = reverse_lazy('staff:resource_list')
+    success_url = reverse_lazy('staff:note_list')
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
 class NoteEditView(StaffRequiredMixin, UpdateView):
@@ -26,7 +38,15 @@ class NoteEditView(StaffRequiredMixin, UpdateView):
     model = Note
     form_class = NoteForm
     template_name = 'staff/resources/note_form.html'
-    success_url = reverse_lazy('staff:resource_list')
+    success_url = reverse_lazy('staff:note_list')
+
+
+class VideoListView(StaffRequiredMixin, ListView):
+    """List all videos"""
+    model = VideoResource
+    template_name = 'staff/resources/video_list.html'
+    context_object_name = 'videos'
+    paginate_by = 20
 
 
 class VideoCreateView(StaffRequiredMixin, CreateView):
@@ -34,7 +54,11 @@ class VideoCreateView(StaffRequiredMixin, CreateView):
     model = VideoResource
     form_class = VideoResourceForm
     template_name = 'staff/resources/video_form.html'
-    success_url = reverse_lazy('staff:resource_list')
+    success_url = reverse_lazy('staff:video_list')
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
 class VideoEditView(StaffRequiredMixin, UpdateView):
@@ -42,7 +66,15 @@ class VideoEditView(StaffRequiredMixin, UpdateView):
     model = VideoResource
     form_class = VideoResourceForm
     template_name = 'staff/resources/video_form.html'
-    success_url = reverse_lazy('staff:resource_list')
+    success_url = reverse_lazy('staff:video_list')
+
+
+class FlashcardListView(StaffRequiredMixin, ListView):
+    """List all flashcards"""
+    model = Flashcard
+    template_name = 'staff/resources/flashcard_list.html'
+    context_object_name = 'flashcards'
+    paginate_by = 20
 
 
 class FlashcardCreateView(StaffRequiredMixin, CreateView):
@@ -50,7 +82,11 @@ class FlashcardCreateView(StaffRequiredMixin, CreateView):
     model = Flashcard
     form_class = FlashcardForm
     template_name = 'staff/resources/flashcard_form.html'
-    success_url = reverse_lazy('staff:resource_list')
+    success_url = reverse_lazy('staff:flashcard_list')
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
 class FlashcardEditView(StaffRequiredMixin, UpdateView):
@@ -58,4 +94,4 @@ class FlashcardEditView(StaffRequiredMixin, UpdateView):
     model = Flashcard
     form_class = FlashcardForm
     template_name = 'staff/resources/flashcard_form.html'
-    success_url = reverse_lazy('staff:resource_list')
+    success_url = reverse_lazy('staff:flashcard_list')

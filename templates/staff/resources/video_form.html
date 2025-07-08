@@ -1,0 +1,117 @@
+{% extends 'staff/base_admin.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Edit Video{% else %}Create Video{% endif %} - MedPrep Admin
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            {% if object %}Edit Video{% else %}Create New Video{% endif %}
+        </h1>
+        <a href="{% url 'staff:video_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Videos
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Video Details</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.topic.id_for_label }}">{{ form.topic.label }}</label>
+                            {{ form.topic }}
+                            {% if form.topic.errors %}
+                                <div class="text-danger small">{{ form.topic.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.video_url.id_for_label }}">{{ form.video_url.label }}</label>
+                            {{ form.video_url }}
+                            {% if form.video_url.errors %}
+                                <div class="text-danger small">{{ form.video_url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.duration_minutes.id_for_label }}">{{ form.duration_minutes.label }}</label>
+                            {{ form.duration_minutes }}
+                            {% if form.duration_minutes.errors %}
+                                <div class="text-danger small">{{ form.duration_minutes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.thumbnail.id_for_label }}">{{ form.thumbnail.label }}</label>
+                            {{ form.thumbnail }}
+                            {% if form.thumbnail.errors %}
+                                <div class="text-danger small">{{ form.thumbnail.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+                            {{ form.tags }}
+                            {% if form.tags.errors %}
+                                <div class="text-danger small">{{ form.tags.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_premium }}
+                                    <label class="form-check-label" for="{{ form.is_premium.id_for_label }}">
+                                        {{ form.is_premium.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if object %}Update Video{% else %}Create Video{% endif %}
+                            </button>
+                            <a href="{% url 'staff:video_list' %}" class="btn btn-secondary ml-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

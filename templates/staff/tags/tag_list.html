@@ -1,25 +1,414 @@
 {% extends 'staff/base_admin.html' %}
+{% load static %}
 
-{% block title %}Tags - MedPrep Admin{% endblock %}
+{% block title %}Tags Management - MedPrep Admin{% endblock %}
+{% block page_title %}Tags{% endblock %}
+
+{% block extra_css %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'staff/css/tags.css' %}">
+<input type="hidden" id="selectedTagIds" value="[]">
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-        <i class="fas fa-tags me-2"></i>Tag Management
-    </h1>
-    <div>
-        <a href="{% url 'staff:tag_add' %}" class="btn btn-admin-primary">
-            <i class="fas fa-plus me-1"></i>Add Tag
-        </a>
+<!-- Page Header -->
+<div class="tags-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'staff:dashboard' %}" class="text-white-50">Dashboard</a></li>
+                        <li class="breadcrumb-item active text-white">Tags Management</li>
+                        <li class="breadcrumb-item active text-white">All</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="fas fa-tags me-3"></i>
+                    Tags & Subtags Management
+                </h1>
+                <p class="mb-0 mt-2 text-white-75">Organize and categorize content with reusable tags</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-light btn-lg" id="addTagBtn">
+                    <i class="fas fa-plus me-2"></i>Add Tag
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">All Tags</h5>
-    </div>
-    <div class="card-body">
-        <p class="text-muted">Tag management interface coming soon...</p>
+<!-- Filter/Search Section -->
+<div class="filter-section">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control search-input" placeholder="Search tags or subtags..." id="searchInput">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select filter-select" id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select filter-select" id="resourceFilter">
+                    <option value="">All Resources</option>
+                    <option value="mcq">MCQs</option>
+                    <option value="video">Videos</option>
+                    <option value="note">Notes</option>
+                </select>
+            </div>
+            <div class="col-md-2 text-end">
+                <div class="dropdown bulk-actions-dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="bulkActionBtn" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                        <span id="bulkActionLabel">Select items</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bulkActionBtn">
+                        <li>
+                            <select id="bulkActionSelect" class="form-select">
+                                <option value="">Choose action...</option>
+                                <option value="archive">Archive Tags</option>
+                                <option value="restore">Restore Tags</option>
+                                <option value="delete">Delete Tags</option>
+                            </select>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Tags Table -->
+<div class="tags-table-container">
+    <div class="table-responsive tags-table">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th width="40">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllTags">
+                        </div>
+                    </th>
+                    <th width="50">#</th>
+                    <th>Tag Name</th>
+                    <th width="100"># Subtags</th>
+                    <th width="180">Used In</th>
+                    <th width="120">Status</th>
+                    <th width="180">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if tags %}
+                    {% for tag in tags %}
+                    <tr class="tag-row" data-tag-id="{{ tag.id }}" data-status="{% if tag.is_active %}active{% else %}archived{% endif %}" data-resources="{% for resource in tag.resources %}{{ resource }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input tag-select-checkbox" type="checkbox" value="{{ tag.id }}">
+                            </div>
+                        </td>
+                        <td class="tag-number">{{ forloop.counter }}</td>
+                        <td class="tag-info">
+                            <div class="tag-name">
+                                <span class="tag-color-dot" style="background-color: {{ tag.color }};"></span>
+                                {{ tag.name }}
+                            </div>
+                            {% if tag.description %}
+                            <div class="tag-description text-muted small">{{ tag.description|truncatechars:60 }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="tag-subtags-count">
+                            <span class="count-badge">{{ tag.subtags.count }}</span>
+                        </td>
+                        <td class="tag-resources">
+                            {% if 'all' in tag.resources %}
+                                <span class="resource-badge mcq">MCQs</span>
+                                <span class="resource-badge video">Videos</span>
+                                <span class="resource-badge note">Notes</span>
+                            {% else %}
+                                {% if 'mcq' in tag.resources %}<span class="resource-badge mcq">MCQs</span>{% endif %}
+                                {% if 'video' in tag.resources %}<span class="resource-badge video">Videos</span>{% endif %}
+                                {% if 'note' in tag.resources %}<span class="resource-badge note">Notes</span>{% endif %}
+                                {% if not tag.resources %}<span class="text-muted small">None</span>{% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="tag-status">
+                            <span class="status-badge {% if tag.is_active %}status-active{% else %}status-archived{% endif %}">
+                                <i class="fas fa-circle"></i>
+                                {% if tag.is_active %}Active{% else %}Archived{% endif %}
+                            </span>
+                        </td>
+                        <td class="tag-actions">
+                            <button type="button" class="btn-action btn-edit btn-edit-tag" data-tag-id="{{ tag.id }}" data-tag-name="{{ tag.name }}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            {% if tag.is_active %}
+                            <button type="button" class="btn-action btn-archive btn-archive-tag" data-tag-id="{{ tag.id }}" data-tag-name="{{ tag.name }}">
+                                <i class="fas fa-archive"></i> Archive
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn-action btn-restore btn-restore-tag" data-tag-id="{{ tag.id }}" data-tag-name="{{ tag.name }}">
+                                <i class="fas fa-undo"></i> Restore
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-content">
+                                    <i class="fas fa-tags fa-4x mb-3"></i>
+                                    <h5>No Tags Found</h5>
+                                    <p>Create your first tag to organize content and help users find related materials.</p>
+                                    <button class="btn btn-primary" id="addFirstTagBtn">
+                                        <i class="fas fa-plus me-2"></i>Add First Tag
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if tags.has_other_pages %}
+<div class="pagination-container">
+    <nav aria-label="Tags navigation">
+        <ul class="pagination justify-content-center">
+            {% if tags.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ tags.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for i in tags.paginator.page_range %}
+                {% if tags.number == i %}
+                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if tags.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ tags.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+<!-- Tag Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">Add Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tagForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="tagId" name="id" value="">
+                    
+                    <!-- Tag Details -->
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="tagName" class="form-label">Tag Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="tagName" name="name" placeholder="Enter tag name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="tagColor" class="form-label">Color</label>
+                                    <div class="color-picker-container">
+                                        <div class="color-preview" id="colorPreview"></div>
+                                        <input type="color" class="form-control form-control-color" id="tagColor" name="color" value="#0057A3">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tagDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="tagDescription" name="description" rows="3" placeholder="Optional description"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tagStatus" class="form-label">Status</label>
+                            <select class="form-select" id="tagStatus" name="is_active">
+                                <option value="true">Active</option>
+                                <option value="false">Archived</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Resource Types</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check resource-type-checkbox">
+                                        <input class="form-check-input resource-checkbox" type="checkbox" id="resourceTypeAll">
+                                        <label class="form-check-label" for="resourceTypeAll">
+                                            All Resources
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check resource-type-checkbox">
+                                        <input class="form-check-input resource-checkbox" type="checkbox" id="resourceTypeMcq">
+                                        <label class="form-check-label" for="resourceTypeMcq">
+                                            MCQs
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check resource-type-checkbox">
+                                        <input class="form-check-input resource-checkbox" type="checkbox" id="resourceTypeVideo">
+                                        <label class="form-check-label" for="resourceTypeVideo">
+                                            Videos
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check resource-type-checkbox">
+                                        <input class="form-check-input resource-checkbox" type="checkbox" id="resourceTypeNote">
+                                        <label class="form-check-label" for="resourceTypeNote">
+                                            Notes
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subtags Section -->
+                    <div id="subtagsSection" style="display: none;">
+                        <h5 class="section-title">
+                            <i class="fas fa-tag"></i>
+                            Subtags
+                        </h5>
+                        
+                        <div class="subtags-table-container">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th>Subtag Name</th>
+                                        <th width="180">Used In</th>
+                                        <th width="120">Status</th>
+                                        <th width="180">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subtagsTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">
+                                            <i class="fas fa-tag me-2"></i>No subtags yet
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addSubtagBtn">
+                                <i class="fas fa-plus me-1"></i>Add Subtag
+                            </button>
+                            
+                            <div id="addSubtagForm" class="add-subtag-form mt-3" style="display: none;">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control form-control-sm" id="newSubtagName" placeholder="Enter subtag name">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-sm btn-primary me-1" id="saveSubtagBtn">
+                                            <i class="fas fa-save me-1"></i>Save
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary" id="cancelSubtagBtn">
+                                            <i class="fas fa-times me-1"></i>Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveTagBtn">
+                    <i class="fas fa-save me-2"></i>Save Tag
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Staff URLs for AJAX
+    window.staffUrls = {
+        tagAdd: "{% url 'staff:tag_create_ajax' %}",
+        tagGet: "{% url 'staff:tag_get_ajax' 0 %}".replace('/0/', '/{id}/'),
+        tagUpdate: "{% url 'staff:tag_update_ajax' 0 %}".replace('/0/', '/{id}/'),
+        tagToggleStatus: "{% url 'staff:tag_toggle_status' %}",
+        tagBulkAction: "{% url 'staff:tag_bulk_action' %}",
+        getTagSubtags: "{% url 'staff:get_tag_subtags' 0 %}".replace('/0/', '/{id}/'),
+        subtagAdd: "{% url 'staff:subtag_create_ajax' %}",
+        subtagUpdate: "{% url 'staff:subtag_update_ajax' 0 %}".replace('/0/', '/{id}/'),
+        subtagToggleStatus: "{% url 'staff:subtag_toggle_status' %}",
+        subtagDelete: "{% url 'staff:subtag_delete' %}"
+    };
+</script>
+<script src="{% static 'staff/js/tags_shared.js' %}"></script>
+<script src="{% static 'staff/js/tags.js' %}"></script>
 {% endblock %}

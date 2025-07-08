@@ -3,7 +3,7 @@ from .academic_models import Subject, Topic, Question, Option
 from .quiz_models import QuizSession, UserAnswer
 from .subscription_models import SubscriptionPlan, PaymentProof
 from .resource_models import Flashcard, Note, VideoResource, UserProgress
-from .tag_models import Tag
+from .tag_models import Tag, Subtag
 
 __all__ = [
     'UserProfile',

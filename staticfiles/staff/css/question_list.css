@@ -1,0 +1,224 @@
+/* MCQ List Page Styles */
+.mcq-header {
+    background: linear-gradient(135deg, #0057A3 0%, #004080 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+}
+
+.search-filters {
+    background: #fff;
+    border: 1px solid #E3E7ED;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.mcq-table {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E3E7ED;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.mcq-table table {
+    margin-bottom: 0;
+}
+
+.mcq-table thead {
+    background: #F5F7FA;
+    color: #222B36;
+}
+
+.mcq-table thead th {
+    border-bottom: 2px solid #E3E7ED;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.mcq-table tbody tr {
+    border-bottom: 1px solid #E3E7ED;
+    transition: background-color 0.2s ease;
+}
+
+.mcq-table tbody tr:hover {
+    background-color: #F8F9FC;
+}
+
+.mcq-table tbody td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #E3E7ED;
+}
+
+.question-text {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-active {
+    background-color: #43B284;
+    color: white;
+}
+
+.status-inactive {
+    background-color: #FF7043;
+    color: white;
+}
+
+.status-premium {
+    background-color: #FFB74D;
+    color: white;
+}
+
+.tag-chip {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #E3F2FD;
+    color: #0057A3;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin: 0.125rem;
+}
+
+.difficulty-easy {
+    color: #43B284;
+    font-weight: 600;
+}
+
+.difficulty-medium {
+    color: #FFB74D;
+    font-weight: 600;
+}
+
+.difficulty-hard {
+    color: #FF7043;
+    font-weight: 600;
+}
+
+.btn-action {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    margin: 0.125rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-edit {
+    background-color: #0057A3;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #004080;
+    color: white;
+}
+
+.btn-delete {
+    background-color: #FF7043;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #E64A19;
+    color: white;
+}
+
+.btn-toggle {
+    background-color: #43B284;
+    color: white;
+}
+
+.btn-toggle:hover {
+    background-color: #2E7D32;
+    color: white;
+}
+
+.bulk-actions {
+    background: #F5F7FA;
+    border: 1px solid #E3E7ED;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.bulk-actions.show {
+    display: block;
+}
+
+.stats-card {
+    background: white;
+    border: 1px solid #E3E7ED;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stats-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0057A3;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    color: #6C757D;
+    font-weight: 500;
+}
+
+.filter-chip {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    background-color: #0057A3;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin: 0.125rem;
+    text-decoration: none;
+}
+
+.filter-chip:hover {
+    background-color: #004080;
+    color: white;
+    text-decoration: none;
+}
+
+.pagination-container {
+    background: white;
+    padding: 1rem;
+    border-top: 1px solid #E3E7ED;
+    border-radius: 0 0 12px 12px;
+}
+
+.question-tooltip {
+    max-width: 400px;
+    word-wrap: break-word;
+}

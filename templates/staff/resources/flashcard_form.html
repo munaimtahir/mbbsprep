@@ -1,0 +1,93 @@
+{% extends 'staff/base_admin.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Edit Flashcard{% else %}Create Flashcard{% endif %} - MedPrep Admin
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            {% if object %}Edit Flashcard{% else %}Create New Flashcard{% endif %}
+        </h1>
+        <a href="{% url 'staff:flashcard_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Flashcards
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Flashcard Details</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.topic.id_for_label }}">{{ form.topic.label }}</label>
+                            {{ form.topic }}
+                            {% if form.topic.errors %}
+                                <div class="text-danger small">{{ form.topic.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.front_text.id_for_label }}">{{ form.front_text.label }}</label>
+                            {{ form.front_text }}
+                            {% if form.front_text.errors %}
+                                <div class="text-danger small">{{ form.front_text.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.back_text.id_for_label }}">{{ form.back_text.label }}</label>
+                            {{ form.back_text }}
+                            {% if form.back_text.errors %}
+                                <div class="text-danger small">{{ form.back_text.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+                            {{ form.tags }}
+                            {% if form.tags.errors %}
+                                <div class="text-danger small">{{ form.tags.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_premium }}
+                                    <label class="form-check-label" for="{{ form.is_premium.id_for_label }}">
+                                        {{ form.is_premium.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if object %}Update Flashcard{% else %}Create Flashcard{% endif %}
+                            </button>
+                            <a href="{% url 'staff:flashcard_list' %}" class="btn btn-secondary ml-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

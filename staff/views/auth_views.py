@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.views import View
 from django.contrib.auth import logout
-from ..forms import StaffLoginForm
+from staff.forms import StaffLoginForm
 
 
 class AdminLoginView(LoginView):

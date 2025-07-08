@@ -1,0 +1,27 @@
+Traceback (most recent call last):
+  File "d:\PMC\Exam-Prep-Site\tests\complete_admin_verification.py", line 47, in setup_test_user
+    print(f"\u2705 Using staff user: {self.staff_user.username}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "d:\PMC\Exam-Prep-Site\tests\complete_admin_verification.py", line 376, in <module>
+    main()
+    ~~~~^^
+  File "d:\PMC\Exam-Prep-Site\tests\complete_admin_verification.py", line 372, in main
+    verifier = AdminSystemVerification()
+  File "d:\PMC\Exam-Prep-Site\tests\complete_admin_verification.py", line 29, in __init__
+    self.setup_test_user()
+    ~~~~~~~~~~~~~~~~~~~~^^
+  File "d:\PMC\Exam-Prep-Site\tests\complete_admin_verification.py", line 49, in setup_test_user
+    print(f"\u274c Error setting up test user: {e}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>
