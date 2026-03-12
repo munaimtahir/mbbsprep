@@ -1,5 +1,9 @@
 # MedPrep Project Context
 
+> Historical / partially outdated.
+>
+> This file is retained for background context from the repair/verification phases. For current repository guidance, start with `README.md` and `docs/INDEX.md`.
+
 ## What This Project Is
 
 `mbbsprep` is a Django application for MBBS exam preparation. It has two major surfaces:

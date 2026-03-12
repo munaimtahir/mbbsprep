@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Instructions - MedPrep{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h1 class="h3 mb-1">Payment Instructions</h1>
+                    <p class="text-muted mb-0">{{ plan.name }} for PKR {{ plan.price }}</p>
+                </div>
+                <div class="card-body">
+                    {% if pending_payment %}
+                    <div class="alert alert-warning">
+                        You already have a pending proof for this plan. You can review it on the payment status page.
+                    </div>
+                    {% endif %}
+                    <ol class="mb-4">
+                        <li>Send the exact amount using your preferred payment method.</li>
+                        <li>Save a clear screenshot of the confirmation.</li>
+                        <li>Upload the screenshot with the matching transaction details below.</li>
+                    </ol>
+                    <form method="post" action="{% url 'core:payment_proof_upload' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Submit Payment Proof</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

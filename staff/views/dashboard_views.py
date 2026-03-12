@@ -37,9 +37,7 @@ class DashboardView(UserPassesTestMixin, TemplateView):
         premium_questions = Question.objects.filter(is_active=True, is_premium=True).count()
         
         # Payment statistics
-        pending_payments = PaymentProof.objects.filter(
-            Q(status='pending') | Q(status='submitted')
-        ).count()
+        pending_payments = PaymentProof.objects.filter(status='pending').count()
         approved_payments = PaymentProof.objects.filter(status='approved').count()
         
         # Revenue statistics (mock data for now)

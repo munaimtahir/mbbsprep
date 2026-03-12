@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Flashcards - MedPrep{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <h1 class="h2 mb-4">Flashcards</h1>
+    <div class="row g-4">
+        {% for flashcard in flashcards %}
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-2">{{ flashcard.topic.subject.name }} / {{ flashcard.topic.name }}</p>
+                    <h2 class="h5">{{ flashcard.front_text }}</h2>
+                    <p>{{ flashcard.back_text|truncatechars:140 }}</p>
+                    <a href="{% url 'core:flashcard_study' flashcard.topic.pk %}" class="btn btn-outline-primary">Study Topic</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info mb-0">No flashcards are available yet.</div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

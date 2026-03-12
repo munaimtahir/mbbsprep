@@ -501,7 +501,7 @@ class UserCreateView(StaffRequiredMixin, CreateView):
         # Create the user
         user = form.save(commit=False)
         user.username = form.cleaned_data['email']  # Use email as username
-        user.set_password(form.cleaned_data['password'])
+        user.email = form.cleaned_data['email']
         
         # Set admin fields
         user_role = form.cleaned_data.get('user_role', 'student')
@@ -512,6 +512,7 @@ class UserCreateView(StaffRequiredMixin, CreateView):
             user.is_staff = True
         
         user.is_active = form.cleaned_data.get('is_active', True)
+        user._skip_welcome_email = not form.cleaned_data.get('send_welcome_email', True)
         user.save()
         
         # Update or create profile (profile is automatically created by signals)
@@ -584,6 +585,9 @@ class BulkUserUploadView(StaffRequiredMixin, View):
         # Handle template download first (doesn't require form validation)
         if action == 'download_template':
             return self.download_template()
+
+        if action == 'confirm':
+            return self.handle_confirm_import()
         
         # For other actions, validate the form
         form = self.get_form()
@@ -591,8 +595,6 @@ class BulkUserUploadView(StaffRequiredMixin, View):
         if form.is_valid():
             if action == 'upload':
                 return self.handle_file_upload(form)
-            elif action == 'confirm':
-                return self.handle_confirm_import(form)
         
         # Form is invalid, render with errors
         context = {
@@ -644,14 +646,14 @@ class BulkUserUploadView(StaffRequiredMixin, View):
         }
         return render(self.request, self.template_name, context)
     
-    def handle_confirm_import(self, form):
+    def handle_confirm_import(self):
         """Actually create the users from validated data"""
         preview_data = self.request.session.get('bulk_upload_preview')
         defaults = self.request.session.get('bulk_upload_defaults', {})
         
         if not preview_data:
             messages.error(self.request, "No data to import. Please upload a file first.")
-            return redirect('staff:user_bulk_upload')
+            return redirect('staff:bulk_user_upload')
         
         created_count = 0
         skipped_count = 0

@@ -7,7 +7,7 @@ from .auth_views import (
     ProfileView, ProfileEditView
 )
 from .quiz_views import (
-    QuizListView, StartQuizView, QuizSessionView,
+    QuizListView, QuizResultsListView, StartQuizView, QuizSessionView,
     QuizQuestionView, SubmitQuizView, QuizResultView
 )
 from .resource_views import (
@@ -33,7 +33,7 @@ __all__ = [
     'ProfileView', 'ProfileEditView',
     
     # Quiz views
-    'QuizListView', 'StartQuizView', 'QuizSessionView',
+    'QuizListView', 'QuizResultsListView', 'StartQuizView', 'QuizSessionView',
     'QuizQuestionView', 'SubmitQuizView', 'QuizResultView',
     
     # Resource views

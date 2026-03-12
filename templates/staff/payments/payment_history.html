@@ -1,0 +1,55 @@
+{% extends 'staff/base_admin.html' %}
+
+{% block title %}Payment History - MedPrep Admin{% endblock %}
+{% block page_title %}Payment History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Reviewed Payments</h1>
+        <p class="text-muted mb-0">Approved and rejected payment proofs.</p>
+    </div>
+    <a href="{% url 'staff:payment_list' %}" class="btn btn-outline-secondary">Back to Pending Queue</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Plan</th>
+                        <th>Transaction</th>
+                        <th>Status</th>
+                        <th>Reviewed By</th>
+                        <th>Reviewed At</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.user.get_full_name|default:payment.user.username }}</td>
+                        <td>{{ payment.subscription_plan.name }}</td>
+                        <td>{{ payment.transaction_id }}</td>
+                        <td>
+                            <span class="badge text-bg-{% if payment.status == 'approved' %}success{% else %}danger{% endif %}">
+                                {{ payment.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ payment.reviewed_by.get_full_name|default:payment.reviewed_by.username|default:'-' }}</td>
+                        <td>{{ payment.reviewed_at|date:"M d, Y H:i"|default:"-" }}</td>
+                        <td>{{ payment.admin_notes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No reviewed payments yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

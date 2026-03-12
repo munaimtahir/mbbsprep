@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ video.title }} - MedPrep{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted">{{ video.topic.subject.name }} / {{ video.topic.name }}</p>
+                    <h1 class="h2">{{ video.title }}</h1>
+                    <p>{{ video.description }}</p>
+                    <p class="small text-muted">Duration: {{ video.duration_formatted }}</p>
+                    <a href="{{ video.video_url }}" class="btn btn-primary" target="_blank" rel="noreferrer">Open Video</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

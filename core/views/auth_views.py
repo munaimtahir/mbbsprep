@@ -13,6 +13,10 @@ from ..forms import UserRegistrationForm, UserProfileForm, CustomAuthenticationF
 from ..models import UserProfile
 
 
+def _default_year_of_study():
+    return UserProfile.YEAR_CHOICES[0][0] if UserProfile.YEAR_CHOICES else ''
+
+
 class CustomLoginView(LoginView):
     """Custom login view"""
     template_name = 'core/auth/login.html'
@@ -85,8 +89,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             # Create profile if it doesn't exist
             profile = UserProfile.objects.create(
                 user=user,
-                year_of_study='1st',
-                college_name='Not specified'
+                year_of_study=_default_year_of_study(),
             )
         
         # Get user's quiz statistics
@@ -138,8 +141,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         profile, created = UserProfile.objects.get_or_create(
             user=self.request.user,
             defaults={
-                'year_of_study': '1st',
-                'college_name': 'Not specified'
+                'year_of_study': _default_year_of_study(),
             }
         )
         return profile

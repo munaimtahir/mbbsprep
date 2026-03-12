@@ -92,7 +92,7 @@ def payment_proof_notification(sender, instance, created, **kwargs):
         except Exception:
             pass
     
-    elif instance.status == 'APPROVED':
+    elif instance.status == 'approved':
         # Payment approved - notify user
         try:
             send_mail(
@@ -103,7 +103,7 @@ def payment_proof_notification(sender, instance, created, **kwargs):
                 Great news! Your payment has been approved and your premium subscription is now active.
                 
                 Plan: {instance.subscription_plan.name}
-                Duration: {instance.subscription_plan.duration_months} months
+                Duration: {instance.subscription_plan.duration_days} days
                 
                 You now have access to all premium features including:
                 - Unlimited practice questions
@@ -123,7 +123,7 @@ def payment_proof_notification(sender, instance, created, **kwargs):
         except Exception:
             pass
     
-    elif instance.status == 'REJECTED':
+    elif instance.status == 'rejected':
         # Payment rejected - notify user
         try:
             send_mail(
@@ -160,11 +160,9 @@ def update_user_statistics(user):
         )
         
         if completed_quizzes.exists():
-            from django.db.models import Avg
-            avg_score = completed_quizzes.aggregate(Avg('score'))['score__avg']
-            profile.average_score = round(avg_score or 0, 2)
-            profile.total_quizzes = completed_quizzes.count()
-            profile.save()
+            profile.total_quiz_score = sum(quiz.score for quiz in completed_quizzes)
+            profile.total_quizzes_taken = completed_quizzes.count()
+            profile.save(update_fields=['total_quiz_score', 'total_quizzes_taken', 'updated_at'])
     except Exception:
         pass  # Don't fail if statistics update fails
 
@@ -175,6 +173,9 @@ def send_welcome_email(sender, instance, created, **kwargs):
     """
     Send welcome email to new users
     """
+    if getattr(instance, '_skip_welcome_email', False):
+        return
+
     if created and instance.email:
         try:
             send_mail(

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}My Quiz Results - MedPrep{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-1">My Quiz Results</h1>
+            <p class="text-muted mb-0">Review your completed quiz attempts and jump back into any topic.</p>
+        </div>
+        <a href="{% url 'core:quiz' %}" class="btn btn-primary">Start Another Quiz</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Completed quizzes</p>
+                    <p class="display-6 mb-0">{{ total_completed }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Average score</p>
+                    <p class="display-6 mb-0">{{ average_score }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Best recent result</p>
+                    {% if best_result %}
+                    <p class="h4 mb-0">{{ best_result.topic.name }}</p>
+                    <p class="text-muted mb-0">{{ best_result.score }}/{{ best_result.total_questions }}</p>
+                    {% else %}
+                    <p class="mb-0 text-muted">No completed quizzes yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Completed Attempts</h2>
+        </div>
+        <div class="card-body p-0">
+            {% if quiz_sessions %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Topic</th>
+                            <th>Score</th>
+                            <th>Completed</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quiz in quiz_sessions %}
+                        <tr>
+                            <td>{{ quiz.topic.subject.name }}</td>
+                            <td>{{ quiz.topic.name }}</td>
+                            <td>{{ quiz.score }}/{{ quiz.total_questions }} ({{ quiz.percentage_score }}%)</td>
+                            <td>{{ quiz.completed_at|date:"M d, Y H:i" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'core:quiz_result' quiz.pk %}" class="btn btn-sm btn-outline-primary">View Result</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4">
+                <p class="text-muted mb-3">You have not completed any quizzes yet.</p>
+                <a href="{% url 'core:quiz' %}" class="btn btn-primary">Go to Quiz Center</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

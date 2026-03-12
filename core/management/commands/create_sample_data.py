@@ -291,7 +291,7 @@ class Command(BaseCommand):
             
             UserProfile.objects.create(
                 user=admin_user,
-                year_of_study='1st',
+                year_of_study='1st_year',
                 college_name='MedPrep Administration',
                 is_premium=True
             )

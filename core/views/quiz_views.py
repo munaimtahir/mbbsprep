@@ -46,6 +46,34 @@ class QuizListView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class QuizResultsListView(LoginRequiredMixin, ListView):
+    """List a user's completed quiz results"""
+    model = QuizSession
+    template_name = 'core/quiz/results.html'
+    context_object_name = 'quiz_sessions'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return QuizSession.objects.filter(
+            user=self.request.user,
+            status='completed',
+        ).select_related('topic__subject').order_by('-completed_at', '-started_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        completed_sessions = self.object_list
+        total_completed = completed_sessions.count()
+        total_questions = sum(session.total_questions for session in completed_sessions)
+        total_score = sum(session.score for session in completed_sessions)
+
+        context.update({
+            'total_completed': total_completed,
+            'average_score': round((total_score / total_questions) * 100, 2) if total_questions else 0,
+            'best_result': completed_sessions.first(),
+        })
+        return context
+
+
 class StartQuizView(LoginRequiredMixin, TemplateView):
     """Start a new quiz session"""
     template_name = 'core/quiz/start_quiz.html'
@@ -195,7 +223,7 @@ class QuizQuestionView(LoginRequiredMixin, DetailView):
         question = get_object_or_404(
             Question, 
             pk=question_id, 
-            quizsession=quiz_session
+            quiz_sessions=quiz_session
         )
         
         # Get selected option

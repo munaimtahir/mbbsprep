@@ -1,11 +1,9 @@
-"""
-Management command to import questions from various sources
-"""
-from django.core.management.base import BaseCommand
-from django.core.files import File
-import json
 import csv
-from core.models import Subject, Topic, Question, QuestionOption
+import json
+
+from django.core.management.base import BaseCommand
+
+from core.models import Option, Question, Subject, Topic
 
 
 class Command(BaseCommand):
@@ -80,8 +78,9 @@ class Command(BaseCommand):
             question = Question.objects.create(
                 topic=topic,
                 question_text=item['question'],
-                difficulty=item.get('difficulty', 'MEDIUM'),
-                explanation=item.get('explanation', '')
+                difficulty=str(item.get('difficulty', 'medium')).lower(),
+                explanation=item.get('explanation', ''),
+                reference=item.get('reference', ''),
             )
             
             # Create options
@@ -89,10 +88,11 @@ class Command(BaseCommand):
             correct_option_index = item.get('correct_answer', 0)
             
             for i, option_text in enumerate(options):
-                QuestionOption.objects.create(
+                Option.objects.create(
                     question=question,
                     option_text=option_text,
-                    is_correct=(i == correct_option_index)
+                    is_correct=(i == correct_option_index),
+                    order=i + 1,
                 )
             
             questions_created += 1
@@ -120,8 +120,9 @@ class Command(BaseCommand):
                 question = Question.objects.create(
                     topic=topic,
                     question_text=row['question'],
-                    difficulty=row.get('difficulty', 'MEDIUM'),
-                    explanation=row.get('explanation', '')
+                    difficulty=str(row.get('difficulty', 'medium')).lower(),
+                    explanation=row.get('explanation', ''),
+                    reference=row.get('reference', ''),
                 )
                 
                 # Create options (assuming columns: option_a, option_b, option_c, option_d)
@@ -137,10 +138,11 @@ class Command(BaseCommand):
                 
                 for i, option_text in enumerate(options):
                     if option_text:  # Only create non-empty options
-                        QuestionOption.objects.create(
+                        Option.objects.create(
                             question=question,
                             option_text=option_text,
-                            is_correct=(i == correct_index)
+                            is_correct=(i == correct_index),
+                            order=i + 1,
                         )
                 
                 questions_created += 1

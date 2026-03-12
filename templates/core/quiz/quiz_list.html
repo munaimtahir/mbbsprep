@@ -104,11 +104,6 @@
             <div class="topic-card">
                 <div class="topic-header">
                     <div class="subject-badge bg-primary">{{ topic.subject.name }}</div>
-                    {% if topic.questions.filter(is_premium=True).exists %}
-                    <div class="premium-indicator">
-                        <i class="fas fa-crown text-warning"></i>
-                    </div>
-                    {% endif %}
                 </div>
                 <div class="topic-content">
                     <h5 class="topic-name">{{ topic.name }}</h5>
@@ -128,15 +123,9 @@
                     <!-- Difficulty Levels -->
                     <div class="difficulty-levels">
                         <span class="difficulty-label">Difficulty:</span>
-                        {% if topic.questions.filter(difficulty='easy').exists %}
                         <span class="difficulty-badge easy">Easy</span>
-                        {% endif %}
-                        {% if topic.questions.filter(difficulty='medium').exists %}
                         <span class="difficulty-badge medium">Medium</span>
-                        {% endif %}
-                        {% if topic.questions.filter(difficulty='hard').exists %}
                         <span class="difficulty-badge hard">Hard</span>
-                        {% endif %}
                     </div>
                 </div>
                 <div class="topic-actions">

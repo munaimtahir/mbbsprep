@@ -1,5 +1,4 @@
-from django.views.generic import ListView, DetailView
-from django.contrib import messages
+from django.views.generic import ListView, TemplateView
 from .user_views import StaffRequiredMixin
 
 
@@ -14,7 +13,11 @@ class SupportInboxView(StaffRequiredMixin, ListView):
         return []
 
 
-class SupportMessageView(StaffRequiredMixin, DetailView):
-    """View individual support message"""
+class SupportMessageView(StaffRequiredMixin, TemplateView):
+    """Placeholder view for individual support message"""
     template_name = 'staff/support/message_detail.html'
-    context_object_name = 'message'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['message_id'] = kwargs.get('pk')
+        return context

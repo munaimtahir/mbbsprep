@@ -1,0 +1,21 @@
+{
+  "name": "medprep-test-automation",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Repository-local Playwright and quality automation for MedPrep",
+  "scripts": {
+    "test": "npm run test:all",
+    "test:all": "npm run test:quality && npm run test:django && npm run test:e2e",
+    "test:quality": "python3 -m ruff check medprep/settings_test.py medprep/settings_playwright.py core/management/commands/seed_test_environment.py tests/automated && python3 -m compileall core staff medprep tests/automated && python3 manage.py check --settings=medprep.settings_test && node --check playwright.config.js && node --check playwright/tests/public-smoke.spec.js && node --check playwright/tests/student-flows.spec.js && node --check playwright/tests/staff-smoke.spec.js",
+    "test:django": "python3 -m pytest",
+    "test:smoke": "python3 -m pytest -m smoke",
+    "test:integration": "python3 -m pytest -m integration",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "PWDEBUG=1 playwright test",
+    "test:install-browsers": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

@@ -1,6 +1,7 @@
 {% extends 'staff/base_admin.html' %}
 
 {% block title %}Resources - MedPrep Admin{% endblock %}
+{% block page_title %}Resources{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -9,12 +10,93 @@
     </h1>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">All Resources</h5>
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-1">Notes</p>
+                <p class="display-6 mb-3">{{ note_count }}</p>
+                <a href="{% url 'staff:note_list' %}" class="btn btn-outline-primary btn-sm">Manage Notes</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-1">Videos</p>
+                <p class="display-6 mb-3">{{ video_count }}</p>
+                <a href="{% url 'staff:video_list' %}" class="btn btn-outline-primary btn-sm">Manage Videos</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-1">Flashcards</p>
+                <p class="display-6 mb-3">{{ flashcard_count }}</p>
+                <a href="{% url 'staff:flashcard_list' %}" class="btn btn-outline-primary btn-sm">Manage Flashcards</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Recent Resource Activity</h5>
     </div>
     <div class="card-body">
-        <p class="text-muted">Resource management interface coming soon...</p>
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <h6>Recent Notes</h6>
+                <ul class="list-group">
+                    {% for note in recent_notes %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold">{{ note.title }}</div>
+                            <small class="text-muted">{{ note.topic.subject.name }} / {{ note.topic.name }}</small>
+                        </div>
+                        <a href="{% url 'staff:note_edit' note.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No notes yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="col-lg-4">
+                <h6>Recent Videos</h6>
+                <ul class="list-group">
+                    {% for video in recent_videos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold">{{ video.title }}</div>
+                            <small class="text-muted">{{ video.topic.subject.name }} / {{ video.topic.name }}</small>
+                        </div>
+                        <a href="{% url 'staff:video_edit' video.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No videos yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="col-lg-4">
+                <h6>Recent Flashcards</h6>
+                <ul class="list-group">
+                    {% for flashcard in recent_flashcards %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold">{{ flashcard.front_text|truncatechars:60 }}</div>
+                            <small class="text-muted">{{ flashcard.topic.subject.name }} / {{ flashcard.topic.name }}</small>
+                        </div>
+                        <a href="{% url 'staff:flashcard_edit' flashcard.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No flashcards yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

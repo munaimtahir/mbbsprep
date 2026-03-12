@@ -73,12 +73,6 @@ class QuizSession(models.Model):
         self.total_questions = self.questions.count()
         
         self.save()
-        
-        # Update user profile stats
-        profile = self.user.userprofile
-        profile.total_quiz_score += self.score
-        profile.total_quizzes_taken += 1
-        profile.save()
 
 
 class UserAnswer(models.Model):

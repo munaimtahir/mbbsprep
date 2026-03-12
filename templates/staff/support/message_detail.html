@@ -1,0 +1,16 @@
+{% extends 'staff/base_admin.html' %}
+
+{% block title %}Support Message - MedPrep Admin{% endblock %}
+{% block page_title %}Support Message{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h1 class="h4 mb-3">Support Message #{{ message_id }}</h1>
+        <p class="text-muted mb-3">
+            Individual support messages are not backed by a real model in the current codebase, so this route renders a stable placeholder instead of failing.
+        </p>
+        <a href="{% url 'staff:support_inbox' %}" class="btn btn-outline-secondary">Back to Inbox</a>
+    </div>
+</div>
+{% endblock %}

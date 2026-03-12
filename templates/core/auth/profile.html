@@ -20,7 +20,7 @@
                         <h1 class="display-6 fw-bold mb-2">{{ user.first_name|default:user.username }}</h1>
                         <p class="lead mb-0">
                             <i class="fas fa-graduation-cap text-success me-2"></i>
-                            {{ profile.year_of_study }} Year MBBS Student
+                            {{ profile.get_year_of_study_display|default:profile.year_of_study }}
                         </p>
                         <p class="mb-0 opacity-75">
                             <i class="fas fa-university text-warning me-2"></i>
@@ -133,7 +133,7 @@
                         <div class="info-item">
                             <label class="info-label">Year of Study</label>
                             <div class="info-value">
-                                <span class="badge bg-primary">{{ profile.year_of_study }}</span>
+                                <span class="badge bg-primary">{{ profile.get_year_of_study_display|default:profile.year_of_study }}</span>
                             </div>
                         </div>
                         
@@ -202,7 +202,7 @@
                                         </div>
                                         <div class="col">
                                             <div class="detail-stat">
-                                                <div class="stat-number text-orange">{{ quiz.time_taken|default:"--" }}</div>
+                                                <div class="stat-number text-orange">{{ quiz.time_taken_formatted|default:"--" }}</div>
                                                 <div class="stat-label">Time</div>
                                             </div>
                                         </div>

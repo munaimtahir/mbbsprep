@@ -1,0 +1,20 @@
+{% extends 'staff/base_admin.html' %}
+
+{% block title %}Delete Tag - MedPrep Admin{% endblock %}
+{% block page_title %}Delete Tag{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h1 class="h4 mb-3">Delete Tag</h1>
+        <p>Are you sure you want to delete the tag <strong>{{ object.name }}</strong>?</p>
+        <p class="text-muted">This will remove the tag from existing associations that reference it.</p>
+
+        <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete Tag</button>
+            <a href="{% url 'staff:tag_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

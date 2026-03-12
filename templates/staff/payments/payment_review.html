@@ -1,0 +1,76 @@
+{% extends 'staff/base_admin.html' %}
+
+{% block title %}Review Payment - MedPrep Admin{% endblock %}
+{% block page_title %}Review Payment{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Payment Details</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">User</dt>
+                    <dd class="col-sm-8">{{ object.user.get_full_name|default:object.user.username }}</dd>
+
+                    <dt class="col-sm-4">Plan</dt>
+                    <dd class="col-sm-8">{{ object.subscription_plan.name }}</dd>
+
+                    <dt class="col-sm-4">Method</dt>
+                    <dd class="col-sm-8">{{ object.get_payment_method_display }}</dd>
+
+                    <dt class="col-sm-4">Transaction</dt>
+                    <dd class="col-sm-8">{{ object.transaction_id }}</dd>
+
+                    <dt class="col-sm-4">Amount</dt>
+                    <dd class="col-sm-8">PKR {{ object.amount_paid }}</dd>
+
+                    <dt class="col-sm-4">Submitted</dt>
+                    <dd class="col-sm-8">{{ object.submitted_at|date:"M d, Y H:i" }}</dd>
+
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8"><span class="badge text-bg-secondary">{{ object.get_status_display }}</span></dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Uploaded Screenshot</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ object.payment_screenshot.url }}" alt="Payment screenshot" class="img-fluid rounded border">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Review Action</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.action.id_for_label }}" class="form-label">Decision</label>
+                        {{ form.action }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.admin_notes.id_for_label }}" class="form-label">Admin Notes</label>
+                        {{ form.admin_notes }}
+                        <div class="form-text">Add context for the student, especially if you reject the proof.</div>
+                    </div>
+                    {{ form.status.as_hidden }}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Save Review</button>
+                        <a href="{% url 'staff:payment_list' %}" class="btn btn-outline-secondary">Back</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

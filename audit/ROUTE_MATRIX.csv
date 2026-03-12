@@ -1,0 +1,112 @@
+URL,View,Template,Template Exists (Y/N)
+/,HomeView,core/home.html,Y
+/signup/,RegisterView,core/auth/register.html,Y
+/login/,CustomLoginView,core/auth/login.html,Y
+/logout/,CustomLogoutView,core/auth/logout.html,Y
+/dashboard/,DashboardView,core/dashboard.html,Y
+/questions/,QuestionBankView,core/question_bank.html,Y
+/quiz/,QuizListView,core/quiz/quiz_list.html,Y
+/results/,QuizResultView (no pk — will 404 in prod),core/quiz/quiz_result.html,Y
+/resources/,ResourcesView,core/resources/resources.html,Y
+/leaderboard/,LeaderboardView,core/leaderboard.html,Y
+/subscribe/,SubscriptionView,core/subscription/subscription.html,Y
+/about/,AboutView,core/static/about.html,Y
+/contact/,ContactView,core/static/contact.html,Y
+/faq/,FAQView,core/static/faq.html,Y
+/terms/,TermsView,core/static/terms.html,Y
+/privacy/,PrivacyView,core/static/privacy.html,Y
+/profile/,ProfileView,core/auth/profile.html,Y
+/profile/edit/,ProfileEditView,core/auth/profile_edit.html,N
+/quiz/topic/<topic_id>/,StartQuizView,core/quiz/start_quiz.html,N
+/quiz/session/<pk>/,QuizSessionView,core/quiz/quiz_session.html,Y
+/quiz/session/<pk>/question/<question_id>/,QuizQuestionView,N/A (JSON),N/A
+/quiz/session/<pk>/submit/,SubmitQuizView,N/A (redirect),N/A
+/quiz/result/<pk>/,QuizResultView,core/quiz/quiz_result.html,Y
+/subjects/<pk>/,SubjectDetailView,core/subject_detail.html,Y
+/topics/<pk>/,TopicDetailView,core/topic_detail.html,Y
+/resources/notes/,NotesListView,core/resources/notes_list.html,N
+/resources/notes/<pk>/,NoteDetailView,core/resources/note_detail.html,N
+/resources/flashcards/,FlashcardsListView,core/resources/flashcards_list.html,N
+/resources/flashcards/<topic_id>/,FlashcardStudyView,core/resources/flashcard_study.html,N
+/resources/videos/,VideosListView,core/resources/videos_list.html,N
+/resources/videos/<pk>/,VideoDetailView,core/resources/video_detail.html,N
+/subscription/payment/<plan_id>/,PaymentView,core/subscription/payment.html,N
+/subscription/payment/proof/,PaymentProofUploadView,core/subscription/payment_proof_upload.html,N
+/subscription/payment/status/,PaymentStatusView,core/subscription/payment_status.html,N
+/accounts/password_reset/,Django built-in,registration/password_reset_form.html,N (no custom override)
+/accounts/password_reset/done/,Django built-in,registration/password_reset_done.html,N (no custom override)
+/accounts/reset/<uidb64>/<token>/,Django built-in,registration/password_reset_confirm.html,Y
+/accounts/reset/done/,Django built-in,registration/password_reset_complete.html,Y
+/staff/login/,AdminLoginView,staff/auth/login.html,Y
+/staff/logout/,AdminLogoutView,staff/auth/logout.html,Y
+/staff/,DashboardView,staff/dashboard.html,Y
+/staff/users/,UserListView,staff/users/user_list.html,Y
+/staff/users/create/,UserCreateView,staff/users/user_add.html,Y
+/staff/users/bulk-upload/,BulkUserUploadView,staff/users/bulk_upload.html,Y
+/staff/users/<pk>/,UserDetailView,staff/users/user_detail.html,Y
+/staff/users/<pk>/edit/,UserEditView,staff/users/user_edit.html,Y
+/staff/users/export/,UserExportView,N/A (CSV download),N/A
+/staff/users/<pk>/export/,UserExportView,N/A (CSV download),N/A
+/staff/questions/,QuestionListView,staff/questions/question_list.html,Y
+/staff/questions/create/,QuestionCreateView,staff/questions/question_add.html,Y
+/staff/questions/add/,QuestionCreateView (alias),staff/questions/question_add.html,Y
+/staff/questions/<pk>/edit/,QuestionEditView,staff/questions/question_edit.html,Y
+/staff/questions/<pk>/delete/,QuestionDeleteView,staff/questions/question_confirm_delete.html,Y
+/staff/questions/bulk-upload/,BulkQuestionUploadView,staff/questions/bulk_upload.html,Y
+/staff/questions/bulk-action/,QuestionBulkActionView,N/A (AJAX/JSON),N/A
+/staff/questions/export/,QuestionExportView,N/A (file download),N/A
+/staff/questions/toggle-status/,QuestionToggleStatusView,N/A (AJAX),N/A
+/staff/ajax/get-topics/<subject_id>/,GetTopicsAjaxView,N/A (JSON),N/A
+/staff/subjects/,SubjectListView,staff/subjects/subject_list.html,Y
+/staff/subjects/create/,SubjectCreateView,staff/subjects/subject_form.html,Y
+/staff/subjects/<pk>/edit/,SubjectEditView,staff/subjects/subject_form.html,Y
+/staff/subjects/ajax/add/,SubjectCreateAjaxView,N/A (JSON),N/A
+/staff/subjects/ajax/<pk>/edit/,SubjectEditAjaxView,N/A (JSON),N/A
+/staff/subjects/toggle-status/,SubjectToggleStatusView,N/A (JSON),N/A
+/staff/subjects/<pk>/topics/,GetSubjectTopicsView,N/A (JSON),N/A
+/staff/topics/,TopicListEnhancedView,staff/topics/topic_list.html,Y
+/staff/topics/create/,TopicCreateView,staff/topics/topic_form.html,Y
+/staff/topics/<pk>/edit/,TopicEditView,staff/topics/topic_form.html,Y
+/staff/topics/bulk-upload/,TopicBulkUploadView,staff/topics/bulk_upload.html,Y
+/staff/topics/bulk-template/,TopicBulkUploadTemplateView,N/A (file download),N/A
+/staff/topics/ajax/add/,TopicCreateAjaxEnhancedView,N/A (JSON),N/A
+/staff/topics/ajax/<pk>/edit/,TopicEditAjaxEnhancedView,N/A (JSON),N/A
+/staff/topics/toggle-status/,TopicToggleStatusView,N/A (JSON),N/A
+/staff/topics/<pk>/delete/,TopicDeleteView,N/A (JSON),N/A
+/staff/tags/,TagListView,staff/tags/tag_list.html,Y
+/staff/tags/create/,TagCreateView,staff/tags/tag_form.html,Y
+/staff/tags/add/,TagCreateView (alias),staff/tags/tag_form.html,Y
+/staff/tags/<pk>/edit/,TagEditView,staff/tags/tag_form.html,Y
+/staff/tags/<pk>/delete/,TagDeleteView,N/A (AJAX),N/A
+/staff/tags/ajax/<pk>/,TagGetAjaxView,N/A (JSON),N/A
+/staff/tags/ajax/create/,TagCreateAjaxView,N/A (JSON),N/A
+/staff/tags/ajax/<pk>/update/,TagUpdateAjaxView,N/A (JSON),N/A
+/staff/tags/ajax/toggle-status/,TagToggleStatusView,N/A (JSON),N/A
+/staff/tags/ajax/bulk-action/,TagBulkActionView,N/A (JSON),N/A
+/staff/tags/<pk>/subtags/,GetTagSubtagsView,N/A (JSON),N/A
+/staff/subtags/ajax/add/,SubtagCreateAjaxView,N/A (JSON),N/A
+/staff/subtags/create/,SubtagCreateAjaxView (alias),N/A (JSON),N/A
+/staff/subtags/ajax/<pk>/update/,SubtagUpdateAjaxView,N/A (JSON),N/A
+/staff/subtags/<pk>/edit/,SubtagUpdateAjaxView (alias),N/A (JSON),N/A
+/staff/subtags/ajax/toggle-status/,SubtagToggleStatusView,N/A (JSON),N/A
+/staff/subtags/ajax/delete/,SubtagDeleteView,N/A (JSON),N/A
+/staff/quizzes/,QuizAttemptListView,staff/quizzes/quiz_list.html,Y
+/staff/leaderboard/,LeaderboardView,staff/quizzes/leaderboard.html,Y
+/staff/resources/,ResourceListView,staff/resources/resource_list.html,Y
+/staff/notes/,NoteListView,staff/resources/note_list.html,Y
+/staff/notes/create/,NoteCreateView,staff/resources/note_form.html,Y
+/staff/notes/<pk>/edit/,NoteEditView,staff/resources/note_form.html,Y
+/staff/videos/,VideoListView,staff/resources/video_list.html,Y
+/staff/videos/create/,VideoCreateView,staff/resources/video_form.html,Y
+/staff/videos/<pk>/edit/,VideoEditView,staff/resources/video_form.html,Y
+/staff/flashcards/,FlashcardListView,staff/resources/flashcard_list.html,Y
+/staff/flashcards/create/,FlashcardCreateView,staff/resources/flashcard_form.html,Y
+/staff/flashcards/<pk>/edit/,FlashcardEditView,staff/resources/flashcard_form.html,Y
+/staff/payments/,PaymentListView,staff/payments/payment_list.html,Y
+/staff/payments/<pk>/review/,PaymentReviewView,staff/payments/payment_review.html,N
+/staff/payments/history/,PaymentHistoryView,staff/payments/payment_history.html,N
+/staff/support/,SupportInboxView,staff/support/inbox.html,N
+/staff/support/<pk>/,SupportMessageView,staff/support/message_detail.html,N
+/staff/settings/,SettingsView,staff/settings/settings.html,Y
+/staff/logs/,ActivityLogsView,staff/settings/logs.html,Y
+/admin/,Django Admin,default Django admin templates,Y

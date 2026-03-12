@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Status - MedPrep{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Payment Status</h1>
+            <p class="text-muted mb-0">Track submitted proofs and your current premium access.</p>
+        </div>
+        <a href="{% url 'core:subscription' %}" class="btn btn-outline-primary">View Plans</a>
+    </div>
+
+    {% if subscription_status %}
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 text-muted">Premium Access</h2>
+                    <p class="h4 mb-0">{% if subscription_status.is_active %}Active{% else %}Inactive{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 text-muted">Total Payments</h2>
+                    <p class="h4 mb-0">{{ payment_stats.total_payments }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 text-muted">Pending Reviews</h2>
+                    <p class="h4 mb-0">{{ payment_stats.pending_payments }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Plan</th>
+                            <th>Transaction</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proof in payment_proofs %}
+                        <tr>
+                            <td>{{ proof.subscription_plan.name }}</td>
+                            <td>{{ proof.transaction_id }}</td>
+                            <td>{{ proof.get_payment_method_display }}</td>
+                            <td><span class="badge text-bg-secondary">{{ proof.get_status_display }}</span></td>
+                            <td>{{ proof.submitted_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No payment proofs submitted yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

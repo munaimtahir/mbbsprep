@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView
 from django.urls import reverse_lazy
 from core.models.resource_models import Note, VideoResource, Flashcard
 from ..forms import NoteForm, VideoResourceForm, FlashcardForm
@@ -7,10 +7,24 @@ from .user_views import StaffRequiredMixin
 
 class ResourceListView(StaffRequiredMixin, ListView):
     """List all resources"""
+    model = Note
     template_name = 'staff/resources/resource_list.html'
+    context_object_name = 'resources'
     
     def get_queryset(self):
-        return None  # Will be implemented with combined resources
+        return Note.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'note_count': Note.objects.count(),
+            'video_count': VideoResource.objects.count(),
+            'flashcard_count': Flashcard.objects.count(),
+            'recent_notes': Note.objects.select_related('topic__subject').order_by('-created_at')[:5],
+            'recent_videos': VideoResource.objects.select_related('topic__subject').order_by('-created_at')[:5],
+            'recent_flashcards': Flashcard.objects.select_related('topic__subject').order_by('-created_at')[:5],
+        })
+        return context
 
 
 class NoteListView(StaffRequiredMixin, ListView):

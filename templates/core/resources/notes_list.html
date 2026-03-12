@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Notes - MedPrep{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Study Notes</h1>
+            <p class="text-muted mb-0">Browse note summaries by subject and topic.</p>
+        </div>
+    </div>
+    <div class="row g-4">
+        {% for note in notes %}
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5">{{ note.title }}</h2>
+                    <p class="text-muted">{{ note.topic.subject.name }} / {{ note.topic.name }}</p>
+                    <p>{{ note.content|truncatechars:180 }}</p>
+                    <a href="{% url 'core:note_detail' note.pk %}" class="btn btn-outline-primary">Read Note</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info mb-0">No notes are available yet.</div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
