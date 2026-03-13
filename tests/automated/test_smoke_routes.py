@@ -62,3 +62,18 @@ def test_staff_routes_render_for_staff_user(staff_client, pending_payment, tag):
     for route in routes:
         response = staff_client.get(route)
         assert response.status_code == 200, route
+
+
+@pytest.mark.django_db
+@pytest.mark.smoke
+def test_support_routes_render_truthful_placeholders(staff_client, pending_payment):
+    inbox_response = staff_client.get(reverse('staff:support_inbox'))
+    message_response = staff_client.get(
+        reverse('staff:support_message', kwargs={'pk': pending_payment.pk})
+    )
+
+    assert inbox_response.status_code == 200
+    assert b'underlying support/message model has not been implemented' in inbox_response.content
+
+    assert message_response.status_code == 200
+    assert b'not backed by a real model' in message_response.content

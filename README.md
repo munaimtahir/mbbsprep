@@ -21,10 +21,13 @@ The repository has reached a **verified v1 baseline with documented limits**. Th
 
 Read:
 
-- `docs/INDEX.md`
-- `docs/00_governance/PROJECT_OVERVIEW.md`
-- `docs/00_governance/V1_BASELINE_FREEZE.md`
-- `AGENTS.md`
+1. `README.md`
+2. `docs/INDEX.md`
+3. `docs/00_governance/*`
+4. `docs/30_repo/REPOSITORY_TRUTH_MAP.md`
+5. code (`core/`, `staff/`, `medprep/`, `templates/`, `static/`)
+6. `tests/automated/`
+7. only then archive/legacy paths if needed (`docs/archive/`, `tests/legacy/`, `scripts/legacy/`, `archive/`)
 
 ## Developer Principle
 

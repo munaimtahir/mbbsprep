@@ -52,6 +52,14 @@ Expected chain:
 - authorized staff user opens payment review screen
 - action can mark approve/reject/pending as implemented
 
+## Staff User Creation
+
+Expected chain:
+- `staff:user_create` renders the add-user form
+- the form owns password, role, profile, and premium-access validation
+- a valid submission creates the Django user plus `UserProfile` in one coherent save path
+- `user_role` maps to Django staff/superuser flags without view-only hidden assumptions
+
 ## Bulk User Upload Forms
 
 Expected chain:

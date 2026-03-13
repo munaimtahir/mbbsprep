@@ -19,6 +19,9 @@ Highest-value coverage areas include:
 6. question-bank filtering behavior
 7. representative staff CRUD behavior
 8. bulk user upload workflow
+9. staff question create flow
+10. topic bulk upload flow
+11. management command import behavior for questions/options
 
 ## Validation Minimum
 

@@ -497,54 +497,9 @@ class UserCreateView(StaffRequiredMixin, CreateView):
     success_url = reverse_lazy('staff:user_list')
     
     def form_valid(self, form):
-        """Create user and profile"""
-        # Create the user
-        user = form.save(commit=False)
-        user.username = form.cleaned_data['email']  # Use email as username
-        user.email = form.cleaned_data['email']
-        
-        # Set admin fields
-        user_role = form.cleaned_data.get('user_role', 'student')
-        if user_role == 'admin':
-            user.is_staff = True
-            user.is_superuser = True
-        elif user_role == 'faculty':
-            user.is_staff = True
-        
-        user.is_active = form.cleaned_data.get('is_active', True)
-        user._skip_welcome_email = not form.cleaned_data.get('send_welcome_email', True)
-        user.save()
-        
-        # Update or create profile (profile is automatically created by signals)
-        profile_data = {
-            'year_of_study': form.cleaned_data.get('year_of_study', ''),
-            'province': form.cleaned_data.get('province', ''),
-            'college_type': form.cleaned_data.get('college_type', ''),
-            'college_name': form.cleaned_data.get('college_name', ''),
-            'phone_number': form.cleaned_data.get('phone_number', ''),
-            'is_premium': form.cleaned_data.get('is_premium', False),
-        }
-        
-        # Get the profile that was automatically created by the signal
-        profile = user.userprofile
-        for field, value in profile_data.items():
-            setattr(profile, field, value)
-        
-        # If user is marked as premium, set expiration date
-        if profile_data.get('is_premium', False):
-            from django.utils import timezone
-            from datetime import timedelta
-            
-            # Use custom expiration date if provided, otherwise default to 1 year
-            custom_expiry = form.cleaned_data.get('premium_expires_at')
-            if custom_expiry:
-                profile.premium_expires_at = custom_expiry
-            else:
-                # Default premium expiration: 1 year from now
-                profile.premium_expires_at = timezone.now() + timedelta(days=365)
-        
-        profile.save()
-        
+        """Create user and profile through the form contract."""
+        user = form.save()
+        self.object = user
         messages.success(
             self.request, 
             f'User "{user.get_full_name()}" has been created successfully!'

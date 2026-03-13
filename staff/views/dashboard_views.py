@@ -40,7 +40,7 @@ class DashboardView(UserPassesTestMixin, TemplateView):
         pending_payments = PaymentProof.objects.filter(status='pending').count()
         approved_payments = PaymentProof.objects.filter(status='approved').count()
         
-        # Revenue statistics (mock data for now)
+        # Revenue statistics remain estimated until verified accounting rules exist.
         total_revenue = approved_payments * 2000  # Assuming average 2000 PKR per payment
         monthly_revenue = PaymentProof.objects.filter(
             status='approved',
@@ -68,6 +68,7 @@ class DashboardView(UserPassesTestMixin, TemplateView):
             'monthly_revenue': monthly_revenue,
             'pending_payments': pending_payments,
             'approved_payments': approved_payments,
+            'revenue_is_estimated': True,
             'total_quiz_attempts': total_quiz_attempts,
             'quiz_attempts_today': quiz_attempts_today,
             'recent_users': recent_users,

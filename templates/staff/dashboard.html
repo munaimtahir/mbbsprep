@@ -70,7 +70,7 @@
                     <div class="stats-number">{{ total_revenue|floatformat:0 }}</div>
                     <div class="stats-label">Total Revenue</div>
                     <div class="stats-change text-muted">
-                        PKR {{ monthly_revenue|floatformat:0 }} this month
+                        PKR {{ monthly_revenue|floatformat:0 }} this month{% if revenue_is_estimated %} (estimated){% endif %}
                     </div>
                 </div>
                 <div class="stats-icon">

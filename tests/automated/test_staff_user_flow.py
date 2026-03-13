@@ -1,6 +1,8 @@
 import pytest
+from datetime import timedelta
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from django.urls import reverse
 
 from core.models import UserProfile
@@ -92,3 +94,36 @@ def test_staff_can_create_user_with_profile_details(staff_client):
     assert profile.college_type == 'Private'
     assert profile.is_premium is True
     assert profile.premium_expires_at is not None
+
+
+@pytest.mark.django_db
+@pytest.mark.integration
+def test_staff_user_create_honors_admin_role_and_custom_premium_expiry(staff_client):
+    custom_expiry = (timezone.now() + timedelta(days=45)).replace(second=0, microsecond=0)
+
+    response = staff_client.post(
+        reverse('staff:user_create'),
+        data={
+            'first_name': 'Admin',
+            'last_name': 'User',
+            'email': 'admin.user@example.com',
+            'password': 'StrongPass123!',
+            'confirm_password': 'StrongPass123!',
+            'user_role': 'admin',
+            'is_premium': 'on',
+            'premium_expires_at': custom_expiry.strftime('%Y-%m-%dT%H:%M'),
+            'is_active': 'on',
+            'send_welcome_email': '',
+        },
+        follow=False,
+    )
+
+    assert response.status_code == 302
+    user = User.objects.get(email='admin.user@example.com')
+    profile = user.userprofile
+
+    assert user.is_staff is True
+    assert user.is_superuser is True
+    assert profile.is_premium is True
+    assert profile.premium_expires_at is not None
+    assert profile.premium_expires_at.replace(second=0, microsecond=0) == custom_expiry

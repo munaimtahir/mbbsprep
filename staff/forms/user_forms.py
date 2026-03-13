@@ -1,10 +1,12 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from core.models.user_models import UserProfile
 import csv
 import io
+from datetime import timedelta
 
 User = get_user_model()
 
@@ -136,8 +138,15 @@ class UserCreateForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        password = cleaned_data.get('password')
         is_premium = cleaned_data.get('is_premium')
         premium_expires_at = cleaned_data.get('premium_expires_at')
+
+        if password:
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                self.add_error('password', exc)
 
         if premium_expires_at and premium_expires_at <= timezone.now():
             self.add_error('premium_expires_at', 'Premium expiry must be in the future.')
@@ -150,7 +159,15 @@ class UserCreateForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.username = self.cleaned_data['email']
+        user.email = self.cleaned_data['email']
         user.set_password(self.cleaned_data['password'])
+
+        user_role = self.cleaned_data.get('user_role', 'student')
+        user.is_staff = user_role in {'faculty', 'admin'}
+        user.is_superuser = user_role == 'admin'
+        user.is_active = self.cleaned_data.get('is_active', True)
+        user._skip_welcome_email = not self.cleaned_data.get('send_welcome_email', True)
+
         if commit:
             user.save()
             profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -161,6 +178,8 @@ class UserCreateForm(forms.ModelForm):
             profile.phone_number = self.cleaned_data.get('phone_number', '')
             profile.is_premium = self.cleaned_data.get('is_premium', False)
             profile.premium_expires_at = self.cleaned_data.get('premium_expires_at')
+            if profile.is_premium and not profile.premium_expires_at:
+                profile.premium_expires_at = timezone.now() + timedelta(days=365)
             profile.save()
         return user
 
