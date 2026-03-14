@@ -43,7 +43,9 @@ def test_payment_status_page_lists_uploaded_proofs(authenticated_client, pending
 @pytest.mark.django_db
 @pytest.mark.integration
 def test_payment_instruction_page_loads(authenticated_client, monthly_plan):
-    response = authenticated_client.get(reverse('core:payment', kwargs={'plan_id': monthly_plan.pk}))
+    response = authenticated_client.get(
+        reverse('core:payment', kwargs={'plan_id': monthly_plan.pk})
+    )
 
     assert response.status_code == 200
     assert monthly_plan.name.encode() in response.content

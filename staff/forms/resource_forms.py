@@ -1,6 +1,7 @@
 from django import forms
-from core.models.resource_models import Note, VideoResource, Flashcard
+
 from core.models.academic_models import Topic
+from core.models.resource_models import Flashcard, Note, VideoResource
 
 
 class NoteForm(forms.ModelForm):
@@ -39,6 +40,15 @@ class NoteForm(forms.ModelForm):
 
 class VideoResourceForm(forms.ModelForm):
     """Form for creating and editing video resources"""
+
+    video_url = forms.URLField(
+        widget=forms.URLInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'YouTube, Vimeo, or other video URL...',
+            }
+        ),
+    )
     
     class Meta:
         model = VideoResource
@@ -56,10 +66,6 @@ class VideoResourceForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 4,
                 'placeholder': 'Video description...'
-            }),
-            'video_url': forms.URLInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'YouTube, Vimeo, or other video URL...'
             }),
             'duration_minutes': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -80,6 +86,12 @@ class VideoResourceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['topic'].queryset = Topic.objects.all()
+
+    def clean_video_url(self):
+        video_url = self.cleaned_data['video_url'].strip()
+        if video_url and '://' not in video_url:
+            video_url = f'https://{video_url}'
+        return video_url
 
 
 class FlashcardForm(forms.ModelForm):

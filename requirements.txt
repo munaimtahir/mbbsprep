@@ -1,9 +1,9 @@
-Django==5.0.6
-mysqlclient==2.2.4
-Pillow==10.3.0
+Django==5.2.12
+mysqlclient==2.2.8
+Pillow==12.1.1
 python-decouple==3.8
-django-crispy-forms==2.1
-crispy-bootstrap5==2024.2
-gunicorn==21.2.0
-pandas==2.0.3
-openpyxl==3.1.2
+django-crispy-forms==2.6
+crispy-bootstrap5==2026.3
+gunicorn==23.0.0
+pandas==2.3.3
+openpyxl==3.1.5

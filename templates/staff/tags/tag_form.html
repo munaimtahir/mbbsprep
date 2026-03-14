@@ -539,13 +539,13 @@
     
     // Staff URLs for AJAX
     window.staffUrls = {
-        tagCreate: "{% url 'staff:tag_add' %}",
+        tagCreate: "{% url 'staff:tag_create' %}",
         tagEdit: "{% url 'staff:tag_edit' 0 %}",
         tagToggleStatus: "{% url 'staff:tag_toggle_status' %}",
         tagBulkAction: "{% url 'staff:tag_bulk_action' %}",
         getTagSubtags: "{% url 'staff:get_tag_subtags' 0 %}",
-        subtagCreate: "{% url 'staff:subtag_create' %}",
-        subtagEdit: "{% url 'staff:subtag_edit' 0 %}",
+        subtagCreate: "{% url 'staff:subtag_create_ajax' %}",
+        subtagEdit: "{% url 'staff:subtag_update_ajax' 0 %}",
         subtagToggleStatus: "{% url 'staff:subtag_toggle_status' %}"
     };
     

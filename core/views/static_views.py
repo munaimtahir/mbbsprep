@@ -4,8 +4,6 @@ Static page views for MedPrep application
 from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.contrib import messages
-from django.core.mail import send_mail
-from django.conf import settings
 
 from ..forms import ContactForm
 
@@ -39,23 +37,14 @@ class ContactView(TemplateView):
     
     def post(self, request, *args, **kwargs):
         form = ContactForm(request.POST)
-        
+
         if form.is_valid():
-            # Send email (you would implement actual email sending here)
-            try:
-                # In a real implementation, you would send this email
-                # send_mail(
-                #     subject=f"Contact Form: {form.cleaned_data['subject']}",
-                #     message=f"From: {form.cleaned_data['name']} <{form.cleaned_data['email']}>\n\n{form.cleaned_data['message']}",
-                #     from_email=settings.DEFAULT_FROM_EMAIL,
-                #     recipient_list=['admin@medprep.com'],
-                # )
-                
-                messages.success(request, "Thank you for your message! We'll get back to you soon.")
-                return self.get(request, *args, **kwargs)
-            except Exception as e:
-                messages.error(request, "Sorry, there was an error sending your message. Please try again.")
-        
+            messages.success(
+                request,
+                "Thanks for reaching out. This form currently validates submissions only; for direct follow-up use support@medprep.com."
+            )
+            return self.get(request, *args, **kwargs)
+
         return render(request, self.template_name, {
             'form': form,
         })

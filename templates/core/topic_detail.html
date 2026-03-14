@@ -8,404 +8,181 @@
 {% endblock %}
 
 {% block content %}
-<div class="topic-detail-container">
-    <!-- Topic Header -->
-    <div class="topic-header">
-        <div class="topic-header-content">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'core:dashboard' %}">Dashboard</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'core:subject_detail' topic.subject.id %}">{{ topic.subject.name }}</a>
-                    </li>
-                    <li class="breadcrumb-item active">{{ topic.name }}</li>
-                </ol>
-            </nav>
-            
-            <div class="topic-info">
-                <h1 class="topic-title">{{ topic.name }}</h1>
-                <p class="topic-description">{{ topic.description }}</p>
-                
-                <div class="topic-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-book"></i>
-                        <span>{{ topic.subject.name }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-question-circle"></i>
-                        <span>{{ topic.question_count }} Questions</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-file-alt"></i>
-                        <span>{{ topic.resource_count }} Resources</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-clock"></i>
-                        <span>{{ topic.estimated_time }} min study time</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="topic-actions">
-                <a href="{% url 'core:start_quiz' topic.id %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-play"></i> Start Quiz
-                </a>
-                <button class="btn btn-outline-secondary btn-lg" id="bookmarkTopic">
-                    <i class="fas fa-bookmark"></i> 
-                    {% if is_bookmarked %}Bookmarked{% else %}Bookmark{% endif %}
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:question_bank' %}">Question Bank</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:subject_detail' topic.subject.id %}">{{ topic.subject.name }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ topic.name }}</li>
+        </ol>
+    </nav>
 
-    <!-- Progress Overview -->
-    {% if user.is_authenticated %}
-    <div class="progress-overview">
-        <h3>Your Progress</h3>
-        <div class="progress-cards">
-            <div class="progress-card">
-                <div class="progress-icon">
-                    <i class="fas fa-chart-line text-primary"></i>
-                </div>
-                <div class="progress-content">
-                    <div class="progress-value">{{ user_progress.average_score|floatformat:0 }}%</div>
-                    <div class="progress-label">Average Score</div>
-                </div>
-            </div>
-            
-            <div class="progress-card">
-                <div class="progress-icon">
-                    <i class="fas fa-trophy text-warning"></i>
-                </div>
-                <div class="progress-content">
-                    <div class="progress-value">{{ user_progress.best_score|floatformat:0 }}%</div>
-                    <div class="progress-label">Best Score</div>
-                </div>
-            </div>
-            
-            <div class="progress-card">
-                <div class="progress-icon">
-                    <i class="fas fa-redo text-info"></i>
-                </div>
-                <div class="progress-content">
-                    <div class="progress-value">{{ user_progress.attempts_count }}</div>
-                    <div class="progress-label">Attempts</div>
-                </div>
-            </div>
-            
-            <div class="progress-card">
-                <div class="progress-icon">
-                    <i class="fas fa-clock text-success"></i>
-                </div>
-                <div class="progress-content">
-                    <div class="progress-value">{{ user_progress.total_time }}</div>
-                    <div class="progress-label">Study Time</div>
-                </div>
-            </div>
-        </div>
-        
-        {% if user_progress.recent_attempts %}
-        <div class="recent-attempts">
-            <h4>Recent Attempts</h4>
-            <div class="attempts-list">
-                {% for attempt in user_progress.recent_attempts %}
-                <div class="attempt-item">
-                    <div class="attempt-score">{{ attempt.score }}%</div>
-                    <div class="attempt-details">
-                        <div class="attempt-date">{{ attempt.completed_at|date:"M d, Y" }}</div>
-                        <div class="attempt-time">{{ attempt.time_taken }}</div>
-                    </div>
-                    <div class="attempt-actions">
-                        <a href="{% url 'core:quiz_result' attempt.id %}" class="btn btn-sm btn-outline-primary">
-                            View Results
-                        </a>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                <div>
+                    <h1 class="h2 mb-2">{{ topic.name }}</h1>
+                    <p class="text-muted mb-3">
+                        {{ topic.description|default:"Focused practice and resources for this topic." }}
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-primary">{{ questions.count }} Questions</span>
+                        <span class="badge bg-success">{{ notes.count }} Notes</span>
+                        <span class="badge bg-warning text-dark">{{ videos.count }} Videos</span>
+                        <span class="badge bg-info text-dark">{{ flashcards.count }} Flashcards</span>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- Study Resources -->
-    {% if topic.resources.exists %}
-    <div class="study-resources">
-        <h3>Study Resources</h3>
-        <div class="resources-grid">
-            {% for resource in topic.resources.all %}
-            <div class="resource-card">
-                <div class="resource-header">
-                    <div class="resource-type">
-                        {% if resource.resource_type == 'note' %}
-                            <i class="fas fa-file-alt text-primary"></i>
-                        {% elif resource.resource_type == 'video' %}
-                            <i class="fas fa-play-circle text-danger"></i>
-                        {% elif resource.resource_type == 'flashcard' %}
-                            <i class="fas fa-clone text-info"></i>
-                        {% else %}
-                            <i class="fas fa-file text-secondary"></i>
-                        {% endif %}
-                    </div>
-                    <div class="resource-title">{{ resource.title }}</div>
-                </div>
-                
-                <div class="resource-content">
-                    <p class="resource-description">{{ resource.description|truncatewords:20 }}</p>
-                    
-                    <div class="resource-meta">
-                        <span class="resource-difficulty difficulty-{{ resource.difficulty|lower }}">
-                            {{ resource.get_difficulty_display }}
-                        </span>
-                        {% if resource.estimated_time %}
-                        <span class="resource-time">
-                            <i class="fas fa-clock"></i> {{ resource.estimated_time }} min
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="resource-actions">
-                    <a href="{{ resource.get_absolute_url }}" class="btn btn-primary btn-sm">
-                        {% if resource.resource_type == 'video' %}
-                            <i class="fas fa-play"></i> Watch
-                        {% elif resource.resource_type == 'flashcard' %}
-                            <i class="fas fa-clone"></i> Study
-                        {% else %}
-                            <i class="fas fa-eye"></i> View
-                        {% endif %}
+                <div class="d-flex flex-column gap-2">
+                    {% if questions.exists %}
+                    <a href="{% url 'core:start_quiz' topic.id %}" class="btn btn-primary">
+                        <i class="fas fa-play me-2"></i>Start Quiz
                     </a>
-                    <button class="btn btn-outline-secondary btn-sm bookmark-resource" 
-                            data-resource-id="{{ resource.id }}">
-                        <i class="fas fa-bookmark"></i>
+                    {% else %}
+                    <button type="button" class="btn btn-secondary" disabled>
+                        <i class="fas fa-info-circle me-2"></i>No Questions Yet
                     </button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <div class="resources-actions">
-            <a href="{% url 'core:resources' %}?topic={{ topic.id }}" class="btn btn-outline-primary">
-                <i class="fas fa-plus"></i> View All Resources
-            </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Practice Questions -->
-    <div class="practice-questions">
-        <h3>Practice Questions</h3>
-        
-        <div class="question-stats">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">{{ question_stats.total_questions }}</div>
-                    <div class="stat-label">Total Questions</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ question_stats.easy_count }}</div>
-                    <div class="stat-label">Easy</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ question_stats.medium_count }}</div>
-                    <div class="stat-label">Medium</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ question_stats.hard_count }}</div>
-                    <div class="stat-label">Hard</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="quiz-options">
-            <div class="quiz-option-card">
-                <div class="option-header">
-                    <h4>Quick Practice</h4>
-                    <span class="option-badge">10 Questions</span>
-                </div>
-                <p>A short quiz to test your knowledge</p>
-                <a href="{% url 'core:start_quiz' topic.id %}?type=quick" class="btn btn-primary">
-                    <i class="fas fa-play"></i> Start Quick Quiz
-                </a>
-            </div>
-            
-            <div class="quiz-option-card">
-                <div class="option-header">
-                    <h4>Full Practice</h4>
-                    <span class="option-badge">{{ question_stats.total_questions }} Questions</span>
-                </div>
-                <p>Complete practice with all available questions</p>
-                <a href="{% url 'core:start_quiz' topic.id %}?type=full" class="btn btn-primary">
-                    <i class="fas fa-play"></i> Start Full Quiz
-                </a>
-            </div>
-            
-            <div class="quiz-option-card">
-                <div class="option-header">
-                    <h4>Timed Practice</h4>
-                    <span class="option-badge">{{ question_stats.total_questions }} Questions</span>
-                </div>
-                <p>Practice under time pressure</p>
-                <a href="{% url 'core:start_quiz' topic.id %}?type=timed" class="btn btn-primary">
-                    <i class="fas fa-stopwatch"></i> Start Timed Quiz
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Related Topics -->
-    {% if related_topics %}
-    <div class="related-topics">
-        <h3>Related Topics</h3>
-        <div class="related-topics-grid">
-            {% for related_topic in related_topics %}
-            <div class="related-topic-card">
-                <div class="topic-name">{{ related_topic.name }}</div>
-                <div class="topic-subject">{{ related_topic.subject.name }}</div>
-                <div class="topic-stats">
-                    <span>{{ related_topic.question_count }} questions</span>
-                </div>
-                <div class="topic-actions">
-                    <a href="{% url 'core:topic_detail' related_topic.id %}" class="btn btn-sm btn-outline-primary">
-                        View Topic
+                    {% endif %}
+                    <a href="{% url 'core:subject_detail' topic.subject.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Subject
                     </a>
                 </div>
             </div>
-            {% endfor %}
+        </div>
+    </div>
+
+    {% if user.is_authenticated and user_progress %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Your Progress</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="small text-muted">Completion</div>
+                        <div class="h5 mb-0">{{ user_progress.completion_percentage }}%</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="small text-muted">Best Quiz Score</div>
+                        <div class="h5 mb-0">{{ user_progress.best_quiz_score }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="small text-muted">Quiz Attempts</div>
+                        <div class="h5 mb-0">{{ user_progress.total_quiz_attempts }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="small text-muted">Time Spent</div>
+                        <div class="h5 mb-0">{{ user_progress.total_time_spent_minutes }} min</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Discussion Section -->
-    {% if user.is_authenticated %}
-    <div class="discussion-section">
-        <h3>Discussion</h3>
-        <div class="discussion-card">
-            <div class="discussion-form">
-                <form method="post" action="{% url 'core:add_comment' topic.id %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <textarea name="comment" class="form-control" rows="3" 
-                                  placeholder="Ask a question or share your thoughts about this topic..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-comment"></i> Post Comment
-                    </button>
-                </form>
-            </div>
-            
-            {% if topic.comments.exists %}
-            <div class="comments-list">
-                {% for comment in topic.comments.all %}
-                <div class="comment-item">
-                    <div class="comment-header">
-                        <div class="comment-author">{{ comment.user.get_full_name|default:comment.user.username }}</div>
-                        <div class="comment-date">{{ comment.created_at|timesince }} ago</div>
-                    </div>
-                    <div class="comment-content">{{ comment.content }}</div>
-                    <div class="comment-actions">
-                        <button class="btn btn-sm btn-outline-secondary like-comment" 
-                                data-comment-id="{{ comment.id }}">
-                            <i class="fas fa-thumbs-up"></i> {{ comment.likes_count }}
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-reply"></i> Reply
-                        </button>
-                    </div>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Practice Questions</h5>
                 </div>
-                {% endfor %}
+                <div class="card-body">
+                    {% if questions %}
+                    <ul class="list-group list-group-flush">
+                        {% for question in questions|slice:":5" %}
+                        <li class="list-group-item px-0">
+                            <div class="fw-semibold">{{ question.question_text|truncatechars:120 }}</div>
+                            <small class="text-muted">{{ question.get_difficulty_display }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if questions.count > 5 %}
+                    <small class="text-muted d-block mt-2">Showing 5 of {{ questions.count }} questions.</small>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-muted mb-0">No active questions are available for this topic yet.</p>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Study Notes</h5>
+                </div>
+                <div class="card-body">
+                    {% if notes %}
+                    <ul class="list-group list-group-flush">
+                        {% for note in notes|slice:":5" %}
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span>{{ note.title|truncatechars:70 }}</span>
+                            <a href="{% url 'core:note_detail' note.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{% url 'core:notes_list' %}?topic={{ topic.id }}" class="btn btn-outline-primary btn-sm mt-3">
+                        Browse Notes
+                    </a>
+                    {% else %}
+                    <p class="text-muted mb-0">No active notes are available for this topic yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Video Lessons</h5>
+                </div>
+                <div class="card-body">
+                    {% if videos %}
+                    <ul class="list-group list-group-flush">
+                        {% for video in videos|slice:":5" %}
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span>{{ video.title|truncatechars:70 }}</span>
+                            <a href="{% url 'core:video_detail' video.id %}" class="btn btn-sm btn-outline-primary">Watch</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{% url 'core:videos_list' %}?topic={{ topic.id }}" class="btn btn-outline-primary btn-sm mt-3">
+                        Browse Videos
+                    </a>
+                    {% else %}
+                    <p class="text-muted mb-0">No active videos are available for this topic yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Flashcards</h5>
+                </div>
+                <div class="card-body">
+                    {% if flashcards %}
+                    <p class="mb-3">Review {{ flashcards.count }} flashcards from this topic.</p>
+                    <a href="{% url 'core:flashcard_study' topic.id %}" class="btn btn-outline-primary btn-sm">
+                        Start Flashcard Study
+                    </a>
+                    {% else %}
+                    <p class="text-muted mb-0">No active flashcards are available for this topic yet.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Bookmark topic functionality
-    const bookmarkBtn = document.getElementById('bookmarkTopic');
-    if (bookmarkBtn) {
-        bookmarkBtn.addEventListener('click', function() {
-            fetch("{% url 'core:bookmark_topic' topic.id %}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.innerHTML = data.is_bookmarked ? 
-                        '<i class="fas fa-bookmark"></i> Bookmarked' : 
-                        '<i class="fas fa-bookmark"></i> Bookmark';
-                    this.classList.toggle('bookmarked', data.is_bookmarked);
-                }
-            });
-        });
-    }
-    
-    // Bookmark resource functionality
-    const resourceBookmarkBtns = document.querySelectorAll('.bookmark-resource');
-    resourceBookmarkBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const resourceId = this.dataset.resourceId;
-            fetch(`/resources/bookmark/${resourceId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.classList.toggle('bookmarked', data.is_bookmarked);
-                    const icon = this.querySelector('i');
-                    icon.classList.toggle('fas', data.is_bookmarked);
-                    icon.classList.toggle('far', !data.is_bookmarked);
-                }
-            });
-        });
-    });
-    
-    // Like comment functionality
-    const likeCommentBtns = document.querySelectorAll('.like-comment');
-    likeCommentBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const commentId = this.dataset.commentId;
-            fetch(`/comments/like/${commentId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.innerHTML = `<i class="fas fa-thumbs-up"></i> ${data.likes_count}`;
-                    this.classList.toggle('liked', data.is_liked);
-                }
-            });
-        });
-    });
-    
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-});
-</script>
 {% endblock %}

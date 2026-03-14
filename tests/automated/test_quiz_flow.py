@@ -86,19 +86,29 @@ def test_quiz_start_session_and_result_pages_render(
 
     quiz_session = QuizSession.objects.get(user=student_user, topic=topic, status='in_progress')
 
-    session_page = authenticated_client.get(reverse('core:quiz_session', kwargs={'pk': quiz_session.pk}))
+    session_page = authenticated_client.get(
+        reverse('core:quiz_session', kwargs={'pk': quiz_session.pk})
+    )
     assert session_page.status_code == 200
     assert topic.name.encode() in session_page.content
 
     for question in quiz_session.questions.all():
         authenticated_client.post(
-            reverse('core:quiz_question', kwargs={'pk': quiz_session.pk, 'question_id': question.pk}),
+            reverse(
+                'core:quiz_question',
+                kwargs={'pk': quiz_session.pk, 'question_id': question.pk},
+            ),
             data={'selected_option': question.correct_option.pk, 'time_taken': 5},
         )
 
-    authenticated_client.post(reverse('core:submit_quiz', kwargs={'pk': quiz_session.pk}), follow=False)
+    authenticated_client.post(
+        reverse('core:submit_quiz', kwargs={'pk': quiz_session.pk}),
+        follow=False,
+    )
 
-    result_page = authenticated_client.get(reverse('core:quiz_result', kwargs={'pk': quiz_session.pk}))
+    result_page = authenticated_client.get(
+        reverse('core:quiz_result', kwargs={'pk': quiz_session.pk})
+    )
     assert result_page.status_code == 200
     assert b'Question Review' in result_page.content
 

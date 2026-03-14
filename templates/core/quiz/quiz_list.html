@@ -165,24 +165,42 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="post" action="{% url 'core:start_quiz' 0 %}" class="quiz-form">
+                        {% if topics %}
+                        <form method="post" action="{% url 'core:quiz' %}" class="quiz-form">
                             {% csrf_token %}
+                            {% if form.non_field_errors %}
+                            <div class="alert alert-danger py-2 mb-3">
+                                {{ form.non_field_errors|striptags }}
+                            </div>
+                            {% endif %}
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="form-label fw-semibold">Topic</label>
                                     {{ form.topic }}
+                                    {% if form.topic.errors %}
+                                    <div class="text-danger small mt-1">{{ form.topic.errors|striptags }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-semibold">Difficulty</label>
                                     {{ form.difficulty }}
+                                    {% if form.difficulty.errors %}
+                                    <div class="text-danger small mt-1">{{ form.difficulty.errors|striptags }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-semibold">Questions</label>
                                     {{ form.number_of_questions }}
+                                    {% if form.number_of_questions.errors %}
+                                    <div class="text-danger small mt-1">{{ form.number_of_questions.errors|striptags }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-semibold">Time (min)</label>
                                     {{ form.time_limit }}
+                                    {% if form.time_limit.errors %}
+                                    <div class="text-danger small mt-1">{{ form.time_limit.errors|striptags }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">&nbsp;</label>
@@ -192,6 +210,11 @@
                                 </div>
                             </div>
                         </form>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            Quick Start is unavailable because there are currently no quiz topics available for your account.
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -281,34 +304,6 @@ document.addEventListener('DOMContentLoaded', function() {
         card.style.animationDelay = `${index * 0.1}s`;
         observer.observe(card);
     });
-    
-    // Form validation
-    const quizForm = document.querySelector('.quiz-form');
-    if (quizForm) {
-        quizForm.addEventListener('submit', function(e) {
-            const topic = this.querySelector('[name="topic"]').value;
-            const questions = this.querySelector('[name="number_of_questions"]').value;
-            const timeLimit = this.querySelector('[name="time_limit"]').value;
-            
-            if (!topic) {
-                e.preventDefault();
-                alert('Please select a topic');
-                return;
-            }
-            
-            if (questions < 5 || questions > 50) {
-                e.preventDefault();
-                alert('Number of questions must be between 5 and 50');
-                return;
-            }
-            
-            if (timeLimit < 5 || timeLimit > 120) {
-                e.preventDefault();
-                alert('Time limit must be between 5 and 120 minutes');
-                return;
-            }
-        });
-    }
     
     // Add hover effects
     document.querySelectorAll('.topic-card').forEach(card => {

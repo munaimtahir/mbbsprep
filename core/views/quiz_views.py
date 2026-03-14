@@ -18,32 +18,81 @@ from ..models import (
 from ..forms import QuizSettingsForm
 
 
+def _start_quiz_session_from_form(request, form):
+    """Create and populate a quiz session from validated form input."""
+    topic = form.cleaned_data['topic']
+    difficulty = form.cleaned_data['difficulty']
+    number_of_questions = form.cleaned_data['number_of_questions']
+    time_limit = form.cleaned_data['time_limit']
+
+    questions_query = topic.questions.filter(is_active=True)
+
+    if difficulty and difficulty != 'all':
+        questions_query = questions_query.filter(difficulty=difficulty)
+
+    if not (hasattr(request.user, 'userprofile') and request.user.userprofile.is_premium_active):
+        questions_query = questions_query.filter(is_premium=False)
+
+    questions = list(questions_query)
+    if len(questions) < number_of_questions:
+        form.add_error(
+            'number_of_questions',
+            f"Not enough questions available for the selected criteria. Only {len(questions)} found."
+        )
+        return None
+
+    selected_questions = random.sample(questions, number_of_questions)
+
+    quiz_session = QuizSession.objects.create(
+        user=request.user,
+        topic=topic,
+        total_questions=number_of_questions,
+        time_limit_minutes=time_limit,
+        status='in_progress'
+    )
+    quiz_session.questions.set(selected_questions)
+
+    messages.success(
+        request,
+        f"Quiz started! You have {time_limit} minutes to complete {number_of_questions} questions."
+    )
+    return quiz_session
+
+
 class QuizListView(LoginRequiredMixin, TemplateView):
     """List available quizzes by topic"""
     template_name = 'core/quiz/quiz_list.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Get user's recent quiz sessions
+
+    def _get_topics_queryset(self):
+        topics = Topic.objects.filter(is_active=True).select_related('subject')
+        if not (hasattr(self.request.user, 'userprofile') and self.request.user.userprofile.is_premium_active):
+            topics = topics.filter(questions__is_premium=False).distinct()
+        return topics
+
+    def _build_context(self, form=None):
         recent_quizzes = QuizSession.objects.filter(
             user=self.request.user
         ).order_by('-started_at')[:10]
-        
-        # Get available topics
-        topics = Topic.objects.filter(is_active=True).select_related('subject')
-        
-        # Filter premium content for non-premium users
-        if not (hasattr(self.request.user, 'userprofile') and 
-                self.request.user.userprofile.is_premium_active):
-            topics = topics.filter(questions__is_premium=False).distinct()
-        
-        context.update({
+
+        return {
             'recent_quizzes': recent_quizzes,
-            'topics': topics,
-            'form': QuizSettingsForm(user=self.request.user),
-        })
+            'topics': self._get_topics_queryset(),
+            'form': form or QuizSettingsForm(user=self.request.user),
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self._build_context(form=kwargs.get('form')))
         return context
+
+    def post(self, request, *args, **kwargs):
+        form = QuizSettingsForm(request.POST, user=request.user)
+        if form.is_valid():
+            quiz_session = _start_quiz_session_from_form(request, form)
+            if quiz_session is not None:
+                return redirect('core:quiz_session', pk=quiz_session.pk)
+
+        return render(request, self.template_name, self._build_context(form=form))
 
 
 class QuizResultsListView(LoginRequiredMixin, ListView):
@@ -91,52 +140,20 @@ class StartQuizView(LoginRequiredMixin, TemplateView):
     
     def post(self, request, *args, **kwargs):
         form = QuizSettingsForm(request.POST, user=request.user)
-        
+
         if form.is_valid():
-            topic = form.cleaned_data['topic']
-            difficulty = form.cleaned_data['difficulty']
-            number_of_questions = form.cleaned_data['number_of_questions']
-            time_limit = form.cleaned_data['time_limit']
-            
-            # Build question queryset
-            questions_query = topic.questions.filter(is_active=True)
-            
-            # Filter by difficulty if specified
-            if difficulty and difficulty != 'all':
-                questions_query = questions_query.filter(difficulty=difficulty)
-            
-            # Filter premium content for non-premium users
-            if not (hasattr(request.user, 'userprofile') and 
-                    request.user.userprofile.is_premium_active):
-                questions_query = questions_query.filter(is_premium=False)
-            
-            # Get random questions
-            questions = list(questions_query)
-            if len(questions) < number_of_questions:
-                messages.error(request, f"Not enough questions available. Only {len(questions)} questions found.")
-                return self.get(request, *args, **kwargs)
-            
-            selected_questions = random.sample(questions, number_of_questions)
-            
-            # Create quiz session
-            quiz_session = QuizSession.objects.create(
-                user=request.user,
-                topic=topic,
-                total_questions=number_of_questions,
-                time_limit_minutes=time_limit,
-                status='in_progress'
-            )
-            
-            # Add questions to session
-            quiz_session.questions.set(selected_questions)
-            
-            messages.success(request, f"Quiz started! You have {time_limit} minutes to complete {number_of_questions} questions.")
-            return redirect('core:quiz_session', pk=quiz_session.pk)
-        
-        # Form invalid
+            quiz_session = _start_quiz_session_from_form(request, form)
+            if quiz_session is not None:
+                return redirect('core:quiz_session', pk=quiz_session.pk)
+
         topic_id = kwargs.get('topic_id')
-        topic = get_object_or_404(Topic, pk=topic_id, is_active=True)
-        
+        topic = Topic.objects.filter(pk=topic_id, is_active=True).first()
+        if topic is None:
+            topic = form.cleaned_data.get('topic')
+        if topic is None:
+            messages.error(request, "Please select a valid topic to start a quiz.")
+            return redirect('core:quiz')
+
         return render(request, self.template_name, {
             'topic': topic,
             'form': form,

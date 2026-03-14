@@ -604,15 +604,17 @@ class BulkQuestionUploadView(StaffRequiredMixin, FormView):
                 )
             else:
                 question = Question.objects.create(**question_data)
+                created = True
             
             # Process options
             options_data = []
-            for letter in ['A', 'B', 'C', 'D', 'E', 'F']:
+            for index, letter in enumerate(['A', 'B', 'C', 'D', 'E', 'F'], start=1):
                 option_text = str(row.get(f'Option {letter}', '')).strip()
                 if option_text and option_text != 'nan':
                     options_data.append({
+                        'letter': letter,
+                        'order': index,
                         'option_text': option_text,
-                        'option_label': letter
                     })
             
             if len(options_data) < 2:
@@ -626,7 +628,7 @@ class BulkQuestionUploadView(StaffRequiredMixin, FormView):
                 return {'success': False, 'error': 'Correct answer is required'}
             
             # Validate correct answer
-            valid_answers = [opt['option_label'] for opt in options_data]
+            valid_answers = [opt['letter'] for opt in options_data]
             if correct_answer not in valid_answers:
                 question.delete()
                 return {'success': False, 'error': f'Correct answer "{correct_answer}" not found in options'}
@@ -640,8 +642,8 @@ class BulkQuestionUploadView(StaffRequiredMixin, FormView):
                 Option.objects.create(
                     question=question,
                     option_text=opt_data['option_text'],
-                    option_label=opt_data['option_label'],
-                    is_correct=(opt_data['option_label'] == correct_answer)
+                    order=opt_data['order'],
+                    is_correct=(opt_data['letter'] == correct_answer)
                 )
             
             # Process tags

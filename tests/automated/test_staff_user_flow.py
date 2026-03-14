@@ -1,9 +1,10 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
 from core.models import UserProfile
 
@@ -12,8 +13,10 @@ from core.models import UserProfile
 @pytest.mark.integration
 def test_staff_bulk_upload_preview_can_be_confirmed_without_reuploading_file(staff_client):
     csv_content = (
-        'first_name,last_name,email,password,role,year_of_study,province,college_type,college_name,phone_number,is_premium,is_active\n'
-        'Amina,Raza,amina.raza@example.com,TempPass123!,student,1st_year,Punjab,Public,Test Medical College,03001234567,FALSE,TRUE\n'
+        'first_name,last_name,email,password,role,year_of_study,province,college_type,'
+        'college_name,phone_number,is_premium,is_active\n'
+        'Amina,Raza,amina.raza@example.com,TempPass123!,student,1st_year,Punjab,Public,'
+        'Test Medical College,03001234567,FALSE,TRUE\n'
     )
     upload = SimpleUploadedFile('users.csv', csv_content.encode('utf-8'), content_type='text/csv')
 

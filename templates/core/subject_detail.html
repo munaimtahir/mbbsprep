@@ -98,9 +98,15 @@
                     <i class="fas fa-bolt me-2"></i>Quick Actions
                 </h5>
                 <div class="d-grid gap-2">
+                    {% if topics %}
                     <a href="{% url 'core:start_quiz' topics.first.pk %}" class="btn btn-primary">
                         <i class="fas fa-play me-2"></i>Start Random Quiz
                     </a>
+                    {% else %}
+                    <button type="button" class="btn btn-secondary" disabled>
+                        <i class="fas fa-info-circle me-2"></i>Topics will appear here soon
+                    </button>
+                    {% endif %}
                     <a href="{% url 'core:resources' %}" class="btn btn-success">
                         <i class="fas fa-book-open me-2"></i>Study Materials
                     </a>

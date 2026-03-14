@@ -79,7 +79,7 @@ class BulkQuestionUploadForm(forms.Form):
     
     csv_file = forms.FileField(
         label='CSV File',
-        help_text='Upload a CSV file with question data. Required columns: question_text, topic, difficulty, explanation, option_a, option_b, option_c, option_d, correct_answer',
+        help_text='Upload a CSV file with required columns: Question Text, Option A, Option B, Correct Answer.',
         widget=forms.FileInput(attrs={
             'class': 'form-control',
             'accept': '.csv'
@@ -99,10 +99,7 @@ class BulkQuestionUploadForm(forms.Form):
             csv_file.seek(0)  # Reset file pointer
             
             reader = csv.DictReader(io.StringIO(content))
-            required_fields = [
-                'question_text', 'topic', 'difficulty', 'explanation',
-                'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer'
-            ]
+            required_fields = ['Question Text', 'Option A', 'Option B', 'Correct Answer']
             
             if not all(field in reader.fieldnames for field in required_fields):
                 raise ValidationError(
@@ -111,25 +108,25 @@ class BulkQuestionUploadForm(forms.Form):
             
             # Validate each row
             for row_num, row in enumerate(reader, start=2):
-                if not row.get('question_text', '').strip():
+                if not row.get('Question Text', '').strip():
                     raise ValidationError(f'Row {row_num}: Question text is required')
-                if not row.get('topic', '').strip():
+                if not row.get('Topic', '').strip():
                     raise ValidationError(f'Row {row_num}: Topic is required')
                 
                 # Validate difficulty
-                difficulty = row.get('difficulty', '').strip().lower()
-                if difficulty not in ['easy', 'medium', 'hard']:
+                difficulty = row.get('Difficulty', '').strip().lower()
+                if difficulty and difficulty not in ['easy', 'medium', 'hard', 'e', 'm', 'h', 'med', 'difficult']:
                     raise ValidationError(f'Row {row_num}: Difficulty must be Easy, Medium, or Hard')
                 
                 # Validate correct answer
-                correct_answer = row.get('correct_answer', '').strip().upper()
-                if correct_answer not in ['A', 'B', 'C', 'D']:
-                    raise ValidationError(f'Row {row_num}: Correct answer must be A, B, C, or D')
+                correct_answer = row.get('Correct Answer', '').strip().upper()
+                if correct_answer not in ['A', 'B', 'C', 'D', 'E', 'F']:
+                    raise ValidationError(f'Row {row_num}: Correct answer must be A, B, C, D, E, or F')
                 
                 # Check if options are provided
-                for option in ['option_a', 'option_b', 'option_c', 'option_d']:
+                for option in ['Option A', 'Option B']:
                     if not row.get(option, '').strip():
-                        raise ValidationError(f'Row {row_num}: {option.replace("_", " ").title()} is required')
+                        raise ValidationError(f'Row {row_num}: {option} is required')
                     
         except UnicodeDecodeError:
             raise ValidationError('File must be UTF-8 encoded.')

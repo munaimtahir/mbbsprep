@@ -42,7 +42,8 @@ def test_staff_can_create_question_with_options(staff_client, subject_with_quest
 def test_staff_can_bulk_upload_topics_and_tags(staff_client):
     csv_content = (
         'LOs,Sub-Topic,Topic,Subject,Type,Module,Assessment\n'
-        'Explain nephron structure,Nephron,Renal Physiology,Physiology,Major Subject,Foundation,MCQS\n'
+        'Explain nephron structure,Nephron,Renal Physiology,Physiology,'
+        'Major Subject,Foundation,MCQS\n'
     )
     upload = SimpleUploadedFile('topics.csv', csv_content.encode('utf-8'), content_type='text/csv')
 

@@ -3,8 +3,6 @@ from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from django.db import transaction, models
 from core.models import Subject, Topic
 from .user_views import StaffRequiredMixin
@@ -54,7 +52,6 @@ class SubjectListView(StaffRequiredMixin, ListView):
         return context
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class SubjectCreateAjaxView(StaffRequiredMixin, View):
     """AJAX view to create a new subject"""
     
@@ -100,7 +97,6 @@ class SubjectCreateAjaxView(StaffRequiredMixin, View):
             return JsonResponse({'success': False, 'message': f'Error creating subject: {str(e)}'})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class SubjectEditAjaxView(StaffRequiredMixin, View):
     """AJAX view to edit an existing subject"""
     
@@ -172,7 +168,6 @@ class SubjectEditAjaxView(StaffRequiredMixin, View):
             return JsonResponse({'success': False, 'message': f'Error updating subject: {str(e)}'})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class SubjectToggleStatusView(StaffRequiredMixin, View):
     """AJAX view to toggle subject active status (archive/restore)"""
     
@@ -242,7 +237,6 @@ class GetSubjectTopicsView(StaffRequiredMixin, View):
             return JsonResponse({'success': False, 'message': f'Error loading topics: {str(e)}'})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class TopicCreateAjaxView(StaffRequiredMixin, View):
     """AJAX view to create a new topic"""
     
@@ -289,7 +283,6 @@ class TopicCreateAjaxView(StaffRequiredMixin, View):
             return JsonResponse({'success': False, 'message': f'Error creating topic: {str(e)}'})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class TopicEditAjaxView(StaffRequiredMixin, View):
     """AJAX view to edit an existing topic"""
     
@@ -551,7 +544,6 @@ class TopicListEnhancedView(StaffRequiredMixin, ListView):
         return context
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class TopicToggleStatusView(StaffRequiredMixin, View):
     """AJAX view to toggle topic active status (archive/restore)"""
     
@@ -585,7 +577,6 @@ class TopicToggleStatusView(StaffRequiredMixin, View):
             return JsonResponse({'success': False, 'message': f'Error updating topic status: {str(e)}'})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class TopicDeleteView(StaffRequiredMixin, View):
     """AJAX view to delete a topic"""
     
@@ -620,7 +611,6 @@ class TopicDeleteView(StaffRequiredMixin, View):
 
 
 # Update existing topic views to use AJAX
-@method_decorator(csrf_exempt, name='dispatch')
 class TopicCreateAjaxEnhancedView(StaffRequiredMixin, View):
     """Enhanced AJAX view to create a new topic"""
     
@@ -684,7 +674,6 @@ class TopicCreateAjaxEnhancedView(StaffRequiredMixin, View):
             return JsonResponse({'success': False, 'message': f'Error creating topic: {str(e)}'})
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class TopicEditAjaxEnhancedView(StaffRequiredMixin, View):
     """Enhanced AJAX view to edit an existing topic"""
     

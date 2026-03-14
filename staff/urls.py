@@ -52,23 +52,17 @@ urlpatterns = [
     
     # Tag Management
     path('tags/', views.TagListView.as_view(), name='tag_list'),
-    path('tags/create/', views.TagCreateView.as_view(), name='tag_create'),
-    path('tags/add/', views.TagCreateView.as_view(), name='tag_add'),  # Alias for templates
-    path('tags/<int:pk>/edit/', views.TagEditView.as_view(), name='tag_edit'),
     path('tags/<int:pk>/delete/', views.TagDeleteView.as_view(), name='tag_delete'),
     # Tag AJAX endpoints
     path('tags/ajax/<int:pk>/', views.TagGetAjaxView.as_view(), name='tag_get_ajax'),
-    path('tags/ajax/create/', views.TagCreateAjaxView.as_view(), name='ajax_tag_create'),
-    path('tags/ajax/create/', views.TagCreateAjaxView.as_view(), name='tag_create_ajax'),  # Alias for templates
+    path('tags/ajax/create/', views.TagCreateAjaxView.as_view(), name='tag_create_ajax'),
     path('tags/ajax/<int:pk>/update/', views.TagUpdateAjaxView.as_view(), name='tag_update_ajax'),
     path('tags/ajax/toggle-status/', views.TagToggleStatusView.as_view(), name='tag_toggle_status'),
     path('tags/ajax/bulk-action/', views.TagBulkActionView.as_view(), name='tag_bulk_action'),
     path('tags/<int:pk>/subtags/', views.GetTagSubtagsView.as_view(), name='get_tag_subtags'),
     # Subtag AJAX endpoints
     path('subtags/ajax/add/', views.SubtagCreateAjaxView.as_view(), name='subtag_create_ajax'),
-    path('subtags/create/', views.SubtagCreateAjaxView.as_view(), name='subtag_create'),  # Alias for templates
     path('subtags/ajax/<int:pk>/update/', views.SubtagUpdateAjaxView.as_view(), name='subtag_update_ajax'),
-    path('subtags/<int:pk>/edit/', views.SubtagUpdateAjaxView.as_view(), name='subtag_edit'),  # Alias for templates
     path('subtags/ajax/toggle-status/', views.SubtagToggleStatusView.as_view(), name='subtag_toggle_status'),
     path('subtags/ajax/delete/', views.SubtagDeleteView.as_view(), name='subtag_delete'),
     

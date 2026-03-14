@@ -916,6 +916,41 @@ class UserExportView(StaffRequiredMixin, View):
             writer.writerow(['Is Staff', user.is_staff])
             writer.writerow(['Is Superuser', user.is_superuser])
             writer.writerow(['Date Joined', user.date_joined.strftime('%Y-%m-%d %H:%M:%S')])
+            writer.writerow(['Last Login', user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'])
+
+            # Write profile info if exists
+            profile = getattr(user, 'userprofile', None)
+            if profile:
+                writer.writerow(['--- Profile Information ---', ''])
+                writer.writerow(['Year of Study', profile.year_of_study])
+                writer.writerow(['Province', profile.province])
+                writer.writerow(['College Type', profile.college_type])
+                writer.writerow(['College Name', profile.college_name])
+                writer.writerow(['Phone Number', profile.phone_number])
+                writer.writerow(['Is Premium', profile.is_premium])
+                writer.writerow(['Premium Expires At', profile.premium_expires_at.strftime('%Y-%m-%d %H:%M:%S') if profile.premium_expires_at else 'N/A'])
+                writer.writerow(['Profile Created', profile.created_at.strftime('%Y-%m-%d %H:%M:%S')])
+                writer.writerow(['Profile Updated', profile.updated_at.strftime('%Y-%m-%d %H:%M:%S')])
+
+            # Add quiz statistics for single-user export
+            try:
+                from core.models import QuizSession
+                quiz_sessions = QuizSession.objects.filter(user=user)
+                if quiz_sessions.exists():
+                    writer.writerow(['--- Quiz Statistics ---', ''])
+                    writer.writerow(['Total Quiz Sessions', quiz_sessions.count()])
+
+                    completed_sessions = quiz_sessions.filter(status='completed')
+                    writer.writerow(['Completed Sessions', completed_sessions.count()])
+
+                    scored_sessions = completed_sessions.filter(score__isnull=False)
+                    if scored_sessions.exists():
+                        avg_score = scored_sessions.aggregate(avg_score=Avg('score'))['avg_score']
+                        best_score = scored_sessions.aggregate(best_score=Max('score'))['best_score']
+                        writer.writerow(['Average Score', f"{avg_score:.2f}%" if avg_score is not None else 'N/A'])
+                        writer.writerow(['Best Score', f"{best_score:.2f}%" if best_score is not None else 'N/A'])
+            except ImportError:
+                pass
         else:
             # Multiple users export - table format
             writer.writerow([
@@ -935,40 +970,5 @@ class UserExportView(StaffRequiredMixin, View):
                     user.is_superuser,
                     user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
                 ])
-        writer.writerow(['Last Login', user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'])
-        
-        # Write profile info if exists
-        profile = getattr(user, 'userprofile', None)
-        if profile:
-            writer.writerow(['--- Profile Information ---', ''])
-            writer.writerow(['Year of Study', profile.year_of_study])
-            writer.writerow(['Province', profile.province])
-            writer.writerow(['College Type', profile.college_type])
-            writer.writerow(['College Name', profile.college_name])
-            writer.writerow(['Phone Number', profile.phone_number])
-            writer.writerow(['Is Premium', profile.is_premium])
-            writer.writerow(['Premium Expires At', profile.premium_expires_at.strftime('%Y-%m-%d %H:%M:%S') if profile.premium_expires_at else 'N/A'])
-            writer.writerow(['Profile Created', profile.created_at.strftime('%Y-%m-%d %H:%M:%S')])
-            writer.writerow(['Profile Updated', profile.updated_at.strftime('%Y-%m-%d %H:%M:%S')])
-        
-        # Add quiz statistics if available
-        try:
-            from core.models import QuizSession
-            quiz_sessions = QuizSession.objects.filter(user=user)
-            if quiz_sessions.exists():
-                writer.writerow(['--- Quiz Statistics ---', ''])
-                writer.writerow(['Total Quiz Sessions', quiz_sessions.count()])
-                writer.writerow(['Completed Sessions', quiz_sessions.filter(completed=True).count()])
-                
-                completed_sessions = quiz_sessions.filter(completed=True, score__isnull=False)
-                if completed_sessions.exists():
-                    avg_score = completed_sessions.aggregate(avg_score=Avg('score'))['avg_score']
-                    best_score = completed_sessions.aggregate(best_score=Max('score'))['best_score']
-                    writer.writerow(['Average Score', f"{avg_score:.2f}%" if avg_score else 'N/A'])
-                    writer.writerow(['Best Score', f"{best_score:.2f}%" if best_score else 'N/A'])
-                    
-        except ImportError:
-            # QuizSession model might not exist
-            pass
         
         return response
